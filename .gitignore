@@ -1,0 +1,13 @@
+*~
+*~
+\#*
+.#*
+_*
+bin/
+pkg/
+src/
+.idea/
+target/
+tests/generated/
+*.iml
+*.rdl

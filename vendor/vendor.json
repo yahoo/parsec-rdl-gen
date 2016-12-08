@@ -1,0 +1,19 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "FZOnMtO4d3hn+R78XmEC4pNPAOg=",
+			"path": "github.com/ardielle/ardielle-go/rdl",
+			"revision": "42fe4e5426c1e90256d5d1c1fd1904c6e4f81383",
+			"revisionTime": "2016-08-22T17:40:53Z"
+		},
+		{
+			"checksumSHA1": "zIH+zKdgjPm3KRioJm/D6fQmZVk=",
+			"path": "go.corp.yahoo.com/sho/parsec-rdl-gen/utils",
+			"revision": "71620e2aac93ee0990977eb18d97affa3ba4539a",
+			"revisionTime": "2016-09-02T07:33:23Z"
+		}
+	],
+	"rootPath": "parsec-rdl-gen"
+}
