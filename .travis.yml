@@ -3,3 +3,18 @@ language: go
 install:
     - GOOS=darwin GOARCH=amd64 go get -x -t -v ./...
     - GOOS=linux GOARCH=amd64 go get -x -t -v ./...
+
+before_deploy:
+    - for i in $GOPATH/bin/rdl-gen-parsec* ;do cp $i $i-linux;done
+    - for i in $GOPATH/bin/darwin_amd64/rdl-gen-parsec*;do cp $i $GOPATH/bin/`basename $i`-darwin;done
+    - zip -j rdl_gen.zip $GOPATH/bin/rdl-gen-parsec*-{darwin,linux}
+    - git tag 0.1.$TRAVIS_BUILD_NUMBER -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
+    - git push --tags
+
+deploy:
+    provider: releases
+    api_key: "GITHUB OAUTH TOKEN"
+    file: rdl_gen.zip
+    skip_cleanup: true
+    on:
+        tags: true
