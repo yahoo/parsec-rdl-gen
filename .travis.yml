@@ -1,8 +1,5 @@
 language: go
 
-env:
-    - GIMME_OS=linux GIMME_ARCH=amd64
-    - GIMME_OS=darwin GIMME_ARCH=amd64
-
 install:
-    - go get -x -t -v ./...
+    - GOOS=darwin GOARCH=amd64 go get -x -t -v ./...
+    - GOOS=linux GOARCH=amd64 go get -x -t -v ./...
