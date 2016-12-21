@@ -1,20 +1,19 @@
 language: go
-
-install:
+  install:
     - GOOS=darwin GOARCH=amd64 go get -x -t -v ./...
     - GOOS=linux GOARCH=amd64 go get -x -t -v ./...
-
 before_deploy:
-    - for i in $GOPATH/bin/rdl-gen-parsec* ;do cp $i $i-linux;done
-    - for i in $GOPATH/bin/darwin_amd64/rdl-gen-parsec*;do cp $i $GOPATH/bin/`basename $i`-darwin;done
-    - zip -j rdl_gen.zip $GOPATH/bin/rdl-gen-parsec*-{darwin,linux}
-    - git tag 0.1.$TRAVIS_BUILD_NUMBER -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
-    - git push --tags
-
+  - for i in $GOPATH/bin/rdl-gen-parsec* ;do cp $i $i-linux;done
+  - for i in $GOPATH/bin/darwin_amd64/rdl-gen-parsec*;do cp $i $GOPATH/bin/`basename $i`-darwin;done
+  - zip -j rdl_gen.zip $GOPATH/bin/rdl-gen-parsec*-{darwin,linux}
+  - git tag 0.1.$TRAVIS_BUILD_NUMBER -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
+  - git push --tags
 deploy:
-    provider: releases
-    api_key: "GITHUB OAUTH TOKEN"
-    file: rdl_gen.zip
-    skip_cleanup: true
-    on:
-        tags: true
+  provider: releases
+  api_key:
+    secure: YFi1ksNh45UXVW/MU6Y6qpOHQU2GHl9gHGJMKzHS/zFHNFCrvG4YUAE6gbwacDAfrCDSUVN+lKy3jHyI/WTiklAr//nalPXH78kytbvxeTBFkNvyjCGu9oUJuWciLKe1H/JSSVGBuU5aL2yo0jJikRJLqVf5aeoJay/dmzUYqt8ByUlkKH7pK4c5yrZqLSeog0iN85AZYyIF4wS/EaPRXwupuuSCbIMkxYmpVKJUu/HtQ9x2S8sAbGZH+VVXp+q3IfaFiRzPx9dVIfuqT9C+mgU10FMdMWgR9HdHpCTxlsSCXO+PneA6yl0veRSB84e7Xf27g+ebDfgfovZqrDRisHfgYtUHg/rp98EwEveN5yU58O5mN4FmZl3joZG14Toq1To8CRRdAPfy9e6uAdjk8u6B8z5HJ95O8B0gzkexzBe+edd+pQ9i643/8T4dCnEaJ+IUsku9G2Q64K0dYaHRCf6U/7NF53gleuceDukdR9arOEQYXAdlZwdcv5QlJDjXKCtNRa+6a+DMbG8sz9xJv6d8h2WyZ58g+YhNNNl5z0Dggw5tBZOubCWmIHlQogKR8ZFTxG+LPu6XqMXSjaojuYTFWjFBI6su8SR3ESBwgfEwRSiRUd1VFoLzpKpgGZnUb4RQ0PJoBpAhGElflgY3B8VZ2wSjxYNV6B4dbrUCkEw=
+  skip_cleanup: true
+  file: rdl_gen.zip
+  on:
+    repo: yahoo/parsec-rdl-gen
+    tags: true
