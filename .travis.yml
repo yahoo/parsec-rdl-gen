@@ -11,7 +11,7 @@ before_deploy:
   - zip -j rdl_gen.zip $GOPATH/bin/rdl-gen-parsec*-{darwin,linux}
   - git config --global user.email "builds@travis-ci.com"
   - git config --global user.name "Travis CI"
-  - git tag 0.1.$TRAVIS_BUILD_NUMBER -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
+  - git tag v0.1.$TRAVIS_BUILD_NUMBER -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
   - git push -q https://$GITHUBKEY@github.com/yahoo/parsec-rdl-gen --tags
 deploy:
   provider: releases
