@@ -1,0 +1,196 @@
+{
+    "namespace": "com.example",
+    "name": "sample",
+    "version": 1,
+    "types": [
+        {
+            "StructTypeDef": {
+                "type": "Struct",
+                "name": "User",
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "String",
+                        "annotations": {
+                            "x_size": "min=3"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "type": "String"
+                    }
+                ]
+            }
+        },
+        {
+            "StructTypeDef": {
+                "type": "Struct",
+                "name": "Users",
+                "fields": [
+                    {
+                        "name": "total",
+                        "type": "Int32"
+                    },
+                    {
+                        "name": "offset",
+                        "type": "Int32"
+                    },
+                    {
+                        "name": "users",
+                        "type": "Array",
+                        "items": "User"
+                    }
+                ]
+            }
+        }
+    ],
+    "resources": [
+        {
+            "type": "User",
+            "method": "GET",
+            "path": "/user/{id}",
+            "inputs": [
+                {
+                    "name": "id",
+                    "type": "int32",
+                    "pathParam": true
+                }
+            ],
+            "expected": "OK",
+            "exceptions": {
+                "BAD_REQUEST": {
+                    "type": "ResourceError"
+                },
+                "FORBIDDEN": {
+                    "type": "ResourceError"
+                },
+                "INTERNAL_SERVER_ERROR": {
+                    "type": "ResourceError"
+                },
+                "UNAUTHORIZED": {
+                    "type": "ResourceError"
+                }
+            }
+        },
+        {
+            "type": "User",
+            "method": "POST",
+            "path": "/user",
+            "inputs": [
+                {
+                    "name": "user",
+                    "type": "User",
+                    "annotations": {
+                        "x_must_validate": ""
+                    }
+                }
+            ],
+            "expected": "CREATED",
+            "exceptions": {
+                "BAD_REQUEST": {
+                    "type": "ResourceError"
+                },
+                "FORBIDDEN": {
+                    "type": "ResourceError"
+                },
+                "INTERNAL_SERVER_ERROR": {
+                    "type": "ResourceError"
+                },
+                "UNAUTHORIZED": {
+                    "type": "ResourceError"
+                }
+            }
+        },
+        {
+            "type": "User",
+            "method": "PUT",
+            "path": "/user/{id}",
+            "inputs": [
+                {
+                    "name": "id",
+                    "type": "int32",
+                    "pathParam": true
+                },
+                {
+                    "name": "user",
+                    "type": "User",
+                    "annotations": {
+                        "x_must_validate": ""
+                    }
+                }
+            ],
+            "expected": "OK",
+            "exceptions": {
+                "BAD_REQUEST": {
+                    "type": "ResourceError"
+                },
+                "FORBIDDEN": {
+                    "type": "ResourceError"
+                },
+                "INTERNAL_SERVER_ERROR": {
+                    "type": "ResourceError"
+                },
+                "UNAUTHORIZED": {
+                    "type": "ResourceError"
+                }
+            }
+        },
+        {
+            "type": "User",
+            "method": "DELETE",
+            "path": "/user/{id}",
+            "inputs": [
+                {
+                    "name": "id",
+                    "type": "int32",
+                    "pathParam": true
+                }
+            ],
+            "expected": "OK",
+            "alternatives": [
+                "NOT_MODIFIED"
+            ],
+            "exceptions": {
+                "BAD_REQUEST": {
+                    "type": "ResourceError"
+                },
+                "FORBIDDEN": {
+                    "type": "ResourceError"
+                },
+                "INTERNAL_SERVER_ERROR": {
+                    "type": "ResourceError"
+                },
+                "UNAUTHORIZED": {
+                    "type": "ResourceError"
+                }
+            }
+        },
+        {
+            "type": "Users",
+            "method": "GET",
+            "path": "/users",
+            "inputs": [
+                {
+                    "name": "ids",
+                    "type": "String",
+                    "queryParam": "ids"
+                }
+            ],
+            "expected": "OK",
+            "exceptions": {
+                "BAD_REQUEST": {
+                    "type": "ResourceError"
+                },
+                "FORBIDDEN": {
+                    "type": "ResourceError"
+                },
+                "INTERNAL_SERVER_ERROR": {
+                    "type": "ResourceError"
+                },
+                "UNAUTHORIZED": {
+                    "type": "ResourceError"
+                }
+            }
+        }
+    ]
+}
