@@ -16,4 +16,4 @@ deploy:
   file: rdl_gen.zip
   on:
     repo: yahoo/parsec-rdl-gen
-    tags: true
+    tags: false
