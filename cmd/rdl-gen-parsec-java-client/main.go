@@ -95,20 +95,9 @@ func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns str
 	}
 
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, ns)
-	out, file, _, err := utils.OutputWriter(packageDir, "ParsecResponseFuture", ".java")
-	if err != nil {
-		return err
-	}
-	gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
-	gen.processTemplate(javaClientResponseFutureTemplate)
-	out.Flush()
-	file.Close()
-	if gen.err != nil {
-		return gen.err
-	}
 
 	//ResourceException - the throawable wrapper for alternate return types
-	out, file, _, err = utils.OutputWriter(packageDir, "ResourceException", ".java")
+	out, file, _, err := utils.OutputWriter(packageDir, "ResourceException", ".java")
 	if err != nil {
 		return err
 	}
@@ -134,6 +123,12 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 	commentFun := func(s string) string {
 		return utils.FormatComment(s, 0, 80)
 	}
+	needExpectFunc := func(r *rdl.Resource) bool {
+		if (r.Expected != "OK" || len(r.Alternatives) > 0) {
+			return true
+		}
+		return false
+	}
 	funcMap := template.FuncMap{
 		"header":      func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":     func() string { return utils.JavaGenerationPackage(gen.schema, gen.ns) },
@@ -146,24 +141,27 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"bodyObj":     func(r *rdl.Resource) string { return gen.getBodyObj(r) },
 		"iMethod":     func(r *rdl.Resource) string { return gen.clientMethodSignature(r) + ";" },
 		"builderExt":  func(r *rdl.Resource) string { return gen.builderExt(r) },
-		"origPackage":  func() string { return utils.JavaGenerationOrigPackage(gen.schema, gen.ns) },
-		"origHeader":   func() string { return utils.JavaGenerationOrigHeader(gen.banner) },
+		"origPackage": func() string { return utils.JavaGenerationOrigPackage(gen.schema, gen.ns) },
+		"origHeader":  func() string { return utils.JavaGenerationOrigHeader(gen.banner) },
+		"returnType":  func(r *rdl.Resource) string { return utils.JavaType(gen.registry, r.Type, true, "", "")},
+		"needExpect":  needExpectFunc,
 	}
 	t := template.Must(template.New(gen.name).Funcs(funcMap).Parse(templateSource))
 	return t.Execute(gen.writer, gen.schema)
 }
 
 func (gen* javaClientGenerator) builderExt(r *rdl.Resource) string {
-	code := ""
+	code := "\n"
+	spacePad := "                            "
 	for _, input := range r.Inputs {
 		iname := javaName(input.Name)
 		if input.PathParam {
-			code += ".resolveTemplate(\"" + iname + "\", " + iname + ")\n"
+			code += spacePad + ".resolveTemplate(\"" + iname + "\", " + iname + ")\n"
 		} else if input.QueryParam != "" {
-			code += ".queryParam(\"" + iname + "\", " + iname + ")\n"
+			code += spacePad + ".queryParam(\"" + iname + "\", " + iname + ")\n"
 		}
 	}
-	code += "                            .build();"
+	code += spacePad + ".build();"
 	return code
 }
 
@@ -190,100 +188,6 @@ func (gen *javaClientGenerator) needBody(r *rdl.Resource) bool {
 	return ok
 }
 
-const javaClientResponseFutureTemplate = `{{header}}
-package {{package}};
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import javax.ws.rs.core.Response;
-import javax.xml.ws.http.HTTPException;
-import java.io.IOException;
-import java.util.Set;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-public class ParsecResponseFuture<T> implements Future {
-    private final Future<Response> future;
-    private final Class<T> tClass;
-    private final ObjectMapper objectMapper;
-    private final Set<Integer> expectedStatusCodes;
-
-    public ParsecResponseFuture(Future<Response> future, Class<T> tClass,
-                                Set<Integer> expectedStatusCodes, ObjectMapper objectMapper) {
-        this.future = future;
-        this.tClass = tClass;
-        this.objectMapper = objectMapper;
-        this.expectedStatusCodes = expectedStatusCodes;
-    }
-
-
-    public ParsecResponseFuture(Future<Response> future, Class<T> tClass,
-                                Set<Integer> expectedStatusCodes) {
-        this(future, tClass, expectedStatusCodes, new ObjectMapper());
-    }
-
-    /**
-     * Get the response.
-     * @return Response response
-     * @throws ExecutionException Execution exception
-     * @throws InterruptedException Interrupted exception
-     */
-    public Response getResponse() throws ExecutionException, InterruptedException {
-        return future.get();
-    }
-
-    @Override
-    public boolean cancel(boolean mayInterruptIfRunning) {
-        return future.cancel(mayInterruptIfRunning);
-    }
-
-    @Override
-    public boolean isCancelled() {
-        return future.isCancelled();
-    }
-
-    @Override
-    public boolean isDone() {
-        return future.isDone();
-    }
-
-    /**
-     * Get the response object.
-     * @return T
-     * @throws ExecutionException Execution exception.
-     * @throws InterruptedException Interrupted exception.
-     */
-    @Override
-    public T get() throws ExecutionException, InterruptedException, HTTPException {
-        Response response = getResponse();
-        int statusCode = response.getStatus();
-
-        if (expectedStatusCodes != null && expectedStatusCodes.contains(statusCode)) {
-            try {
-                if (response.hasEntity()) {
-                    String body = response.getEntity().toString();
-                    return objectMapper.readValue(body, tClass);
-                }
-                return null;
-            } catch (IOException e) {
-                throw new RuntimeException("Invalid Response Body");
-            }
-        } else {
-            throw new HTTPException(statusCode);
-        }
-    }
-
-    @Override
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException,
-            TimeoutException, HTTPException {
-        // make sure that we can get the response before timeout
-        future.get(timeout, unit);
-        return get();
-    }
-}
-`
 const javaClientInterfaceTemplate = `{{origHeader}}
 package {{origPackage}}
 
@@ -302,9 +206,10 @@ package {{origPackage}};
 import {{package}}.ResourceException;
 {{range .Types}}{{if .StructTypeDef}}{{if .StructTypeDef.Name}}import {{package}}.{{.StructTypeDef.Name}};
 {{end}}{{end}}{{end}}
-import com.yahoo.ec.parsec.clients.ParsecAsyncHttpClient;
-import com.yahoo.ec.parsec.clients.ParsecAsyncHttpRequest;
-import com.yahoo.ec.parsec.clients.ParsecAsyncHttpRequest.Builder;
+import com.yahoo.parsec.clients.DefaultAsyncCompletionHandler;
+import com.yahoo.parsec.clients.ParsecAsyncHttpClient;
+import com.yahoo.parsec.clients.ParsecAsyncHttpRequest;
+import com.yahoo.parsec.clients.ParsecAsyncHttpRequest.Builder;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -410,30 +315,27 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
     {{methodSig .}} {
         String path = "{{.Path}}";
         String body = null;
-        {{if needBody .}}
+{{if needBody .}}
         try {
             body = objectMapper.writeValueAsString({{bodyObj .}});
         } catch (JsonProcessingException e) {
             LOGGER.error("JsonProcessingException: " + e.getMessage());
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
-        {{end}}
-        URI uri = UriBuilder.fromUri(url).path(path)
-                            {{builderExt .}}
+{{end}}
+        URI uri = UriBuilder.fromUri(url).path(path){{builderExt .}}
         ParsecAsyncHttpRequest request = getRequest("{{.Method}}", uri, body);
 
-        CompletableFuture<Response> response = null;
-        try {
-            response = parsecAsyncHttpClient.execute(request);
-        } catch (ExecutionException e) {
-            LOGGER.error("ExecutionException: " + e.getMessage());
-            throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-
+{{if needExpect .}}
         Set<Integer> expectedStatus = new HashSet<>();
         expectedStatus.add(ResourceException.{{.Expected}});
-        {{if .Alternatives}}{{range .Alternatives}}expectedStatus.add(ResourceException.{{.}});{{end}}{{end}}
-        return new ParsecResponseFuture<>(response, User.class, expectedStatus, objectMapper);
+        {{if .Alternatives}}{{range .Alternatives}}expectedStatus.add(ResourceException.{{.}});
+{{end}}{{end}}
+        AsyncHandler<{{returnType .}}> asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class, expectedStatus);
+{{else}}
+        AsyncHandler<{{returnType .}}> asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class);
+{{end}}
+        return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
     }
 {{end}}
 }
@@ -489,7 +391,7 @@ func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource) string {
 			sparams = sparams + ", java.util.Map<String,java.util.List<String>> headers"
 		}
 	}
-	return "ParsecResponseFuture<" + returnType + "> " + methName + "(" + sparams + ") throws ResourceException"
+	return "CompletableFuture<" + returnType + "> " + methName + "(" + sparams + ") throws ResourceException"
 }
 
 
