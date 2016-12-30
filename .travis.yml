@@ -10,7 +10,7 @@ install:
 before_deploy:
   - for i in $GOPATH/bin/rdl-gen-parsec* ;do cp $i $i-linux;done
   - for i in $GOPATH/bin/darwin_amd64/rdl-gen-parsec*;do cp $i $GOPATH/bin/`basename $i`-darwin;done
-  - zip -j rdl_gen.zip $GOPATH/bin/rdl-gen-parsec*-{darwin,linux}
+  - zip -j rdl-gen.zip $GOPATH/bin/rdl-gen-parsec*-{darwin,linux}
   - git config --global user.email "builds@travis-ci.com"
   - git config --global user.name "Travis CI"
   - git tag v0.1.$TRAVIS_BUILD_NUMBER -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
@@ -21,7 +21,7 @@ deploy:
   api_key:
     secure: guVyQQaaXhvp7dXaft2Xvvb8GD3P4FKVJOr+m+4u4yDPDR7GOO4FKJsMHJZOBltoSjSfOrnZhVR+7/WfmzUEcrwZUT4FkGdqX/nlNYlanq0zWND4+teDNG5ZKp9734VGMvQVZGqEAmSgntMNuGgEVKg34JSmvpOT7vMIB+jDmTM2uHwqUO1Rb5zExg7zcC9nozuwATcb36FmFwevU9c3hkuOMSudru/Pfd52fNX3Mro6U5heZ1X6m/K1jJ+qwLdsgjoaPwzOxJH+zud4GMT0qCv4rF6VV5mFBd34bITvBOKezvyNDaP4M6bgq5IKCAvpCGh/tZ5kKpnX8ok3nnmt7R5HLyeDKTlKtL/93enLwB52Kj69hH9OLjnZBFaTkKhchYIFYM8Vi81Qroc3AkpijNoeyVHi29UiHJBkCkNwkQjbCr1nk0xczlPgE4VEw4myDY1yJbKTT8Hsh4ksgqg0kaEYL2LnMKbsXrBjzgbJJKCu2DIfJm0+CPuLBa/+svXacfkdaG4QF2SxLQfd5QbGbTIScDj2qbIOOelxG9CDShHAZqOfRYyX4mRP57wh8J2aSqX1bsiTBtVDgjSQiQn0PWYBSj1c/eV6IVHxa+EJJfN2BJ2WaFxMsKpVoxz6rPByb/8E/T8zLdM/6/8ygtq/R+Xr9X2nP8QGSlcnmEWRwVU=
   skip_cleanup: true
-  file: rdl_gen.zip
+  file: rdl-gen.zip
   on:
     repo: yahoo/parsec-rdl-gen
     tags: false
