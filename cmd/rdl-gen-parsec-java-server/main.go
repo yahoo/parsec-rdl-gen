@@ -675,7 +675,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import com.yahoo.ec.parsec.logging.LogUtil;
+import com.yahoo.parsec.logging.LogUtil;
 import org.codehaus.jackson.map.ObjectMapper;
 {{classImports}}
 
