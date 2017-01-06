@@ -189,8 +189,9 @@ func (gen *javaClientGenerator) needBody(r *rdl.Resource) bool {
 }
 
 const javaClientInterfaceTemplate = `{{origHeader}}
-package {{origPackage}}
+package {{origPackage}};
 
+import java.util.concurrent.CompletableFuture;
 import {{package}}.ResourceException;
 {{range .Types}}{{if .StructTypeDef}}{{if .StructTypeDef.Name}}import {{package}}.{{.StructTypeDef.Name}};
 {{end}}{{end}}{{end}}
@@ -206,6 +207,7 @@ package {{origPackage}};
 import {{package}}.ResourceException;
 {{range .Types}}{{if .StructTypeDef}}{{if .StructTypeDef.Name}}import {{package}}.{{.StructTypeDef.Name}};
 {{end}}{{end}}{{end}}
+import com.ning.http.client.AsyncHandler;
 import com.yahoo.parsec.clients.DefaultAsyncCompletionHandler;
 import com.yahoo.parsec.clients.ParsecAsyncHttpClient;
 import com.yahoo.parsec.clients.ParsecAsyncHttpRequest;
