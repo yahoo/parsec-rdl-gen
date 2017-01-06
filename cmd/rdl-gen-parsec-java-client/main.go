@@ -129,7 +129,7 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		}
 		return false
 	}
-	needImportHashSetFunc : = func(rs []*rdl.Resource) bool {
+	needImportHashSetFunc := func(rs []*rdl.Resource) bool {
 		for _,r := range rs {
 			if (needExpectFunc(r)) {
 				return true;
