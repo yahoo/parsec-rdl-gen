@@ -129,6 +129,14 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		}
 		return false
 	}
+	needImportHashSetFunc : = func(rs []*rdl.Resource) bool {
+		for _,r := range rs {
+			if (needExpectFunc(r)) {
+				return true;
+			}
+		}
+		return false;
+	}
 	funcMap := template.FuncMap{
 		"header":      func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":     func() string { return utils.JavaGenerationPackage(gen.schema, gen.ns) },
@@ -145,6 +153,7 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"origHeader":  func() string { return utils.JavaGenerationOrigHeader(gen.banner) },
 		"returnType":  func(r *rdl.Resource) string { return utils.JavaType(gen.registry, r.Type, true, "", "")},
 		"needExpect":  needExpectFunc,
+		"needImportHashSet":  needImportHashSetFunc,
 	}
 	t := template.Must(template.New(gen.name).Funcs(funcMap).Parse(templateSource))
 	return t.Execute(gen.writer, gen.schema)
@@ -220,8 +229,9 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
-{{if needExpect .}}import java.util.HashSet;
-import java.util.Set;{{end}}
+{{if needImportHashSet .Resources}}import java.util.HashSet;
+import java.util.Set;
+{{end}}
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
