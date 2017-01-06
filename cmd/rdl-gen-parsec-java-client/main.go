@@ -230,8 +230,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 {{if needImportHashSet .Resources}}import java.util.HashSet;
-import java.util.Set;
-{{end}}
+import java.util.Set;{{end}}
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
