@@ -127,7 +127,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 			// import user defined struct classes
 			for _, t := range schema.Types {
 				tName, tType, _ := rdl.TypeInfo(t)
-				if tType == "struct" || tType == "enum" {
+				if strings.ToLower(string(tType)) == "struct" || strings.ToLower(string(tType)) == "enum" {
 					gen.appendImportClass(packageName + "." + string(tName))
 				}
 			}
