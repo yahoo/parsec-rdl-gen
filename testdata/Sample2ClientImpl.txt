@@ -6,7 +6,6 @@ package com.example;
 
 import com.example.parsec_generated.ResourceException;
 import com.example.parsec_generated.User;
-import com.example.parsec_generated.Users;
 
 import com.ning.http.client.AsyncHandler;
 import com.yahoo.parsec.clients.DefaultAsyncCompletionHandler;
@@ -21,8 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
-import java.util.HashSet;
-import java.util.Set;
+
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -125,90 +123,6 @@ public class SampleClientImpl implements SampleClient {
 
 
         AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
-
-        return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
-    }
-
-    @Override
-    public CompletableFuture<User> postUser(User user) throws ResourceException {
-        String path = "/user";
-        String body = null;
-
-        try {
-            body = objectMapper.writeValueAsString(user);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("JsonProcessingException: " + e.getMessage());
-            throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-
-        URI uri = UriBuilder.fromUri(url).path(path)
-                            .build();
-        ParsecAsyncHttpRequest request = getRequest("POST", uri, body);
-
-
-        Set<Integer> expectedStatus = new HashSet<>();
-        expectedStatus.add(ResourceException.CREATED);
-        
-        AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class, expectedStatus);
-
-        return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
-    }
-
-    @Override
-    public CompletableFuture<User> putUser(int id, User user) throws ResourceException {
-        String path = "/user/{id}";
-        String body = null;
-
-        try {
-            body = objectMapper.writeValueAsString(user);
-        } catch (JsonProcessingException e) {
-            LOGGER.error("JsonProcessingException: " + e.getMessage());
-            throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
-        }
-
-        URI uri = UriBuilder.fromUri(url).path(path)
-                            .resolveTemplate("id", id)
-                            .build();
-        ParsecAsyncHttpRequest request = getRequest("PUT", uri, body);
-
-
-        AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
-
-        return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
-    }
-
-    @Override
-    public CompletableFuture<User> deleteUser(int id) throws ResourceException {
-        String path = "/user/{id}";
-        String body = null;
-
-        URI uri = UriBuilder.fromUri(url).path(path)
-                            .resolveTemplate("id", id)
-                            .build();
-        ParsecAsyncHttpRequest request = getRequest("DELETE", uri, body);
-
-
-        Set<Integer> expectedStatus = new HashSet<>();
-        expectedStatus.add(ResourceException.OK);
-        expectedStatus.add(ResourceException.NOT_MODIFIED);
-
-        AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class, expectedStatus);
-
-        return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
-    }
-
-    @Override
-    public CompletableFuture<Users> getUsers(String ids) throws ResourceException {
-        String path = "/users";
-        String body = null;
-
-        URI uri = UriBuilder.fromUri(url).path(path)
-                            .queryParam("ids", ids)
-                            .build();
-        ParsecAsyncHttpRequest request = getRequest("GET", uri, body);
-
-
-        AsyncHandler<Users> asyncHandler = new DefaultAsyncCompletionHandler<>(Users.class);
 
         return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
     }
