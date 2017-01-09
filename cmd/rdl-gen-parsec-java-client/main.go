@@ -285,12 +285,12 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
         this.headers = headers;
     }
 
-    public {{cName}}ClientImpl (
+    public {{cName}}ClientImpl(
             ParsecAsyncHttpClient client,
             ObjectMapper objectMapper,
             String url,
-            Map<String, String> headers)
-    {
+            Map<String, String> headers
+    ) {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = objectMapper;
         this.url = url;

@@ -77,12 +77,12 @@ public class SampleClientImpl implements SampleClient {
         this.headers = headers;
     }
 
-    public SampleClientImpl (
+    public SampleClientImpl(
             ParsecAsyncHttpClient client,
             ObjectMapper objectMapper,
             String url,
-            Map<String, String> headers)
-    {
+            Map<String, String> headers
+    ) {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = objectMapper;
         this.url = url;
