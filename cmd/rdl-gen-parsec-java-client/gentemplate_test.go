@@ -72,16 +72,16 @@ func TestGenerateImpl(test *testing.T) {
 	}
 }
 
-func TestGenerateImpl(test *testing.T) {
+func TestGenerateImpl2(test *testing.T) {
 	data, err := ioutil.ReadFile("../../testdata/sample2.json")
 	if err != nil {
-		test.Error("can not read sample file ")
+		test.Error("can not read sample2 file ")
 		os.Exit(1)
 	}
 	var schema rdl.Schema
 	err = json.Unmarshal(data, &schema)
 	if err != nil {
-		test.Error("unmarshal sample data fail")
+		test.Error("unmarshal sample2 data fail")
 		os.Exit(1)
 	}
 
