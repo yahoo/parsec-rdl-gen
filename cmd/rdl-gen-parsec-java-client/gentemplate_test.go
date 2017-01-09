@@ -72,6 +72,35 @@ func TestGenerateImpl(test *testing.T) {
 	}
 }
 
+func TestGenerateImpl(test *testing.T) {
+	data, err := ioutil.ReadFile("../../testdata/sample2.json")
+	if err != nil {
+		test.Error("can not read sample file ")
+		os.Exit(1)
+	}
+	var schema rdl.Schema
+	err = json.Unmarshal(data, &schema)
+	if err != nil {
+		test.Error("unmarshal sample data fail")
+		os.Exit(1)
+	}
+
+	reg := rdl.NewTypeRegistry(&schema)
+	cName := utils.Capitalize(string(schema.Name))
+
+	buf := new (bytes.Buffer)
+	writer := bufio.NewWriter(buf)
+	gen := &javaClientGenerator{reg, &schema, cName, writer, nil, "test", "", ""}
+	gen.processTemplate(javaClientTemplate)
+	writer.Flush()
+	realClientImpl := buf.String()
+	expectedSampleClientImpl, err := ioutil.ReadFile("../../testdata/Sample2ClientImpl.txt")
+	if realClientImpl != string(expectedSampleClientImpl) {
+		test.Errorf("sample2 client impl not generated as expected, real: \n%s\n, expected: \n%s\n",
+			realClientImpl, expectedSampleClientImpl)
+	}
+}
+
 func TestUriConstruct(test *testing.T) {
 	gen := &javaClientGenerator{nil, nil, "", nil, nil, "test", "", ""}
 	inputs := []*rdl.ResourceInput{{Name: "id", PathParam: true}}

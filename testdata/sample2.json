@@ -1,0 +1,55 @@
+{
+    "namespace": "com.example",
+    "name": "sample",
+    "version": 1,
+    "types": [
+        {
+            "StructTypeDef": {
+                "type": "Struct",
+                "name": "User",
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "String",
+                        "annotations": {
+                            "x_size": "min=3"
+                        }
+                    },
+                    {
+                        "name": "id",
+                        "type": "String"
+                    }
+                ]
+            }
+        }
+    ],
+    "resources": [
+        {
+            "type": "User",
+            "method": "GET",
+            "path": "/user/{id}",
+            "inputs": [
+                {
+                    "name": "id",
+                    "type": "int32",
+                    "pathParam": true
+                }
+            ],
+            "expected": "OK",
+            "exceptions": {
+                "BAD_REQUEST": {
+                    "type": "ResourceError"
+                },
+                "FORBIDDEN": {
+                    "type": "ResourceError"
+                },
+                "INTERNAL_SERVER_ERROR": {
+                    "type": "ResourceError"
+                },
+                "UNAUTHORIZED": {
+                    "type": "ResourceError"
+                }
+            }
+        }
+    ]
+}
