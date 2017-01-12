@@ -676,7 +676,7 @@ import java.util.LinkedHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import com.yahoo.parsec.logging.LogUtil;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 {{classImports}}
 
 @Path("{{rootPath}}")
