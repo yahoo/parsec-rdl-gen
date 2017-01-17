@@ -4,8 +4,8 @@ Parsec Ardielle (RDL) External Generators
 
 * parsec-java-model - generator for generating Parsec Java models
 * parsec-java-server - generator for generating Parsec Java server
+* parsec-java-client - generator for generating Parsec Java client for target web service
 * parsec-swagger - generator for generating Swagger JSON schemas
-
 
 ## Usage
 
@@ -13,7 +13,7 @@ These generators are designed to co-work with [ardielle-tools](https://github.co
 
 Sample usage for co-working with [ardielle-tools](https://github.com/ardielle/ardielle-tools):
 
-    rdl generate [options] <parsec-java-model | parsec-java-server | parsec-swagger> <schema.rdl>
+    rdl generate [options] <parsec-java-model | parsec-java-server | parsec-java-client | parsec-swagger> <schema.rdl>
 
 Please refer to [ardielle-tools](https://github.com/ardielle/ardielle-tools) for more information.
 
