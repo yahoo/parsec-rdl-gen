@@ -17,6 +17,7 @@ import (
 	"sort"
 	"strings"
 	"text/template"
+	"strconv"
 )
 
 const (
@@ -52,13 +53,23 @@ type javaServerGenerator struct {
 func main() {
 	pOutdir := flag.String("o", ".", "Output directory")
 	flag.String("s", "", "RDL source file")
-	genAnnotations := flag.Bool("a", true, "Generate annotations")
-	genUsingPath := flag.Bool("p", true, "Generate using path")
-	genHandlerImpl := flag.Bool("i", true, "Generate interface implementations")
-	genParsecError := flag.Bool("e", true, "Generate Parsec Error classes")
+	genAnnotationsString := flag.String("a", "true", "Generate annotations")
+	genUsingPathString := flag.String("p", "true", "Generate using path")
+	genHandlerImplString := flag.String("i", "true", "Generate interface implementations")
+	genParsecErrorString := flag.String("e", "true", "Generate Parsec Error classes")
 	namespace := flag.String("ns", "", "Namespace")
 	basePath := flag.String("b", "", "Base path")
 	flag.Parse()
+
+	genAnnotations, err:= strconv.ParseBool(*genAnnotationsString)
+	checkErr(err)
+	genUsingPath, err:= strconv.ParseBool(*genUsingPathString)
+	checkErr(err)
+	genHandlerImpl, err:= strconv.ParseBool(*genHandlerImplString)
+	checkErr(err)
+	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
+	checkErr(err)
+
 	data, err := ioutil.ReadAll(os.Stdin)
 	banner := "parsec-rdl-gen (development version)"
 	if Version != "" {
@@ -69,12 +80,19 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			GenerateJavaServer(banner, &schema, *pOutdir, *genAnnotations, *genHandlerImpl, *genUsingPath, *genParsecError, *namespace, *basePath)
+			GenerateJavaServer(banner, &schema, *pOutdir, genAnnotations, genHandlerImpl, genUsingPath, genParsecError, *namespace, *basePath)
 			os.Exit(0)
 		}
 	}
 	fmt.Fprintf(os.Stderr, "*** %v\n", err)
 	os.Exit(1)
+}
+
+func checkErr(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "*** %v\n", err)
+		os.Exit(1)
+	}
 }
 
 // GenerateJavaServer generates the server code for the RDL-defined service

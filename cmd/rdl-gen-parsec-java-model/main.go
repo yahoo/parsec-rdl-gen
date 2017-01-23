@@ -18,6 +18,7 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+	"strconv"
 )
 
 const (
@@ -54,9 +55,13 @@ type javaModelGenerator struct {
 func main() {
 	pOutdir := flag.String("o", ".", "Output directory")
 	flag.String("s", "", "RDL source file")
-	generateAnnotations := flag.Bool("a", true, "RDL source file")
+	generateAnnotationsString := flag.String("a", "true", "RDL source file")
 	namespace := flag.String("ns", "", "Namespace")
 	flag.Parse()
+
+	generateAnnotations, err:= strconv.ParseBool(*generateAnnotationsString)
+	checkErr(err)
+
 	data, err := ioutil.ReadAll(os.Stdin)
 	banner := "parsec-rdl-gen (development version)"
 	if Version != "" {
@@ -67,12 +72,19 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			GenerateJavaModel(banner, &schema, *pOutdir, *generateAnnotations, *namespace)
+			GenerateJavaModel(banner, &schema, *pOutdir, generateAnnotations, *namespace)
 			os.Exit(0)
 		}
 	}
 	fmt.Fprintf(os.Stderr, "*** %v\n", err)
 	os.Exit(1)
+}
+
+func checkErr(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "*** %v\n", err)
+		os.Exit(1)
+	}
 }
 
 // GenerateJavaModel generates the model code for the types defined in the RDL schema.
