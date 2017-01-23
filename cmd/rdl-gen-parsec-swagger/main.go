@@ -17,6 +17,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"strconv"
 )
 
 const (
@@ -26,21 +27,32 @@ const (
 func main() {
 	pOutdir := flag.String("o", ".", "Output directory")
 	flag.String("s", "", "RDL source file")
-	genParsecError := flag.Bool("e", true, "Generate Parsec Error classes")
+	genParsecErrorString := flag.String("e", "true", "Generate Parsec Error classes")
 	scheme := flag.String("c", "", "Scheme")
 	basePath := flag.String("b", "/api", "Base path")
 	flag.Parse()
+
+	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
+	checkErr(err)
+
 	data, err := ioutil.ReadAll(os.Stdin)
 	if err == nil {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			ExportToSwagger(&schema, *pOutdir, *basePath, *genParsecError, *scheme)
+			ExportToSwagger(&schema, *pOutdir, *basePath, genParsecError, *scheme)
 			os.Exit(0)
 		}
 	}
 	fmt.Fprintf(os.Stderr, "*** %v\n", err)
 	os.Exit(1)
+}
+
+func checkErr(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "*** %v\n", err)
+		os.Exit(1)
+	}
 }
 
 // ExportToSwagger exports the RDL schema to Swagger 2.0 format,
