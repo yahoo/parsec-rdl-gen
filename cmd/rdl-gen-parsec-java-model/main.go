@@ -55,7 +55,7 @@ type javaModelGenerator struct {
 func main() {
 	pOutdir := flag.String("o", ".", "Output directory")
 	flag.String("s", "", "RDL source file")
-	generateAnnotationsString := flag.String("a", true, "RDL source file")
+	generateAnnotationsString := flag.String("a", "true", "RDL source file")
 	namespace := flag.String("ns", "", "Namespace")
 	flag.Parse()
 
