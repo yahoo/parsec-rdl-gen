@@ -26,7 +26,7 @@ const (
 	JavaxValidationPackage     = "javax.validation"
 	JavaxInjectPackage         = "javax.inject"
 	HibernateConstraintPackage = "org.hibernate.validator.constraints"
-	ParsecConstraintPackage    = "com.yahoo.parsec.validation.constraints"
+	ParsecConstraintPackage    = "com.yahoo.parsec.constraint.validators"
 	ValidationGroupsClass      = "ParsecValidationGroups"
 )
 

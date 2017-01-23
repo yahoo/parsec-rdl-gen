@@ -27,7 +27,7 @@ const (
 	JavaxValidationPackage        = "javax.validation"
 	JavaxXmlBindAnnotationPackage = "javax.xml.bind.annotation"
 	HibernateConstraintPackage    = "org.hibernate.validator.constraints"
-	ParsecConstraintPackage       = "com.yahoo.parsec.validation.constraints"
+	ParsecConstraintPackage       = "com.yahoo.parsec.constraint.validators"
 	ValidationGroupsKey           = "groups"
 	ValidationGroupsClass         = "ParsecValidationGroups"
 	ValidationGroupsRegexPattern  = "(^|[ ,])" + ValidationGroupsKey + "\\s?="
