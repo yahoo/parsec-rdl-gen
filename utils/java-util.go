@@ -305,31 +305,31 @@ func GetUserDefinedTypeAnnotations(userDefinedType rdl.TypeRef, schemaTypes []*r
 	for _, schemaType := range schemaTypes {
 		switch schemaType.Variant {
 		case rdl.TypeVariantStructTypeDef:
-			if userDefinedType == schemaType.StructTypeDef.Type {
+			if string(userDefinedType) == string(schemaType.StructTypeDef.Name) {
 				return schemaType.StructTypeDef.Annotations
 			}
 		case rdl.TypeVariantStringTypeDef:
-			if userDefinedType == schemaType.StringTypeDef.Type {
+			if string(userDefinedType) == string(schemaType.StringTypeDef.Name) {
 				return schemaType.StringTypeDef.Annotations
 			}
 		case rdl.TypeVariantMapTypeDef:
-			if userDefinedType == schemaType.MapTypeDef.Type {
+			if string(userDefinedType) == string(schemaType.MapTypeDef.Name) {
 				return schemaType.MapTypeDef.Annotations
 			}
 		case rdl.TypeVariantArrayTypeDef:
-			if userDefinedType == schemaType.ArrayTypeDef.Type {
+			if string(userDefinedType) == string(schemaType.ArrayTypeDef.Name) {
 				return schemaType.ArrayTypeDef.Annotations
 			}
 		case rdl.TypeVariantBytesTypeDef:
-			if userDefinedType == schemaType.BytesTypeDef.Type {
+			if string(userDefinedType) == string(schemaType.BytesTypeDef.Name) {
 				return schemaType.BytesTypeDef.Annotations
 			}
 		case rdl.TypeVariantNumberTypeDef:
-			if userDefinedType == schemaType.NumberTypeDef.Type {
+			if string(userDefinedType) == string(schemaType.NumberTypeDef.Name) {
 				return schemaType.NumberTypeDef.Annotations
 			}
 		case rdl.TypeVariantUnionTypeDef:
-			if userDefinedType == schemaType.UnionTypeDef.Type {
+			if string(userDefinedType) == string(schemaType.UnionTypeDef.Name) {
 				return schemaType.UnionTypeDef.Annotations
 			}
 		}
