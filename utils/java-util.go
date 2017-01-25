@@ -10,7 +10,6 @@ import (
 	"os"
 	"strings"
 	"text/template"
-	"unicode"
 )
 
 
@@ -37,25 +36,6 @@ func JavaGenerationOrigPackage(schema *rdl.Schema, namespace string) string {
 	return string(schema.Namespace)
 }
 
-func camelSnakeToKebab(name string) string {
-	s := strings.Replace(name, "_", "-", -1)
-	result := make([]rune, 0)
-	wasLower := false
-	for _, c := range s {
-		if unicode.IsUpper(c) {
-			if wasLower {
-				result = append(result, '-')
-			}
-			result = append(result, unicode.ToLower(c))
-			wasLower = false
-		} else {
-			result = append(result, c)
-			wasLower = true
-		}
-	}
-	return string(result)
-}
-
 func JavaGenerationRootPath(schema *rdl.Schema, basePath string) string {
 	if basePath != "" {
 		if schema.Version != nil {
@@ -66,11 +46,10 @@ func JavaGenerationRootPath(schema *rdl.Schema, basePath string) string {
 		}
 		return basePath
 	} else if schema.Name != "" {
-		n := camelSnakeToKebab(string(schema.Name))
 		if schema.Version != nil {
-			return fmt.Sprintf("/%s/v%d", n, *schema.Version)
+			return fmt.Sprintf("/%s/v%d", string(schema.Name), *schema.Version)
 		} else {
-			return fmt.Sprintf("/%s", n)
+			return fmt.Sprintf("/%s", string(schema.Name))
 		}
 	}
 
