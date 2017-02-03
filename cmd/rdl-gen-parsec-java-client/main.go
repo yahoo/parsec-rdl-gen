@@ -132,10 +132,19 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 	needImportHashSetFunc := func(rs []*rdl.Resource) bool {
 		for _,r := range rs {
 			if (needExpectFunc(r)) {
-				return true;
+				return true
 			}
 		}
-		return false;
+		return false
+	}
+	needBodyFunc := func(r *rdl.Resource) bool { return gen.needBody(r) }
+	needImportJsonProcessingExceptionFunc := func(rs []*rdl.Resource) bool {
+		for _,r := range rs {
+			if (needBodyFunc(r)) {
+				return true
+			}
+		}
+		return false
 	}
 	funcMap := template.FuncMap{
 		"header":      func() string { return utils.JavaGenerationHeader(gen.banner) },
@@ -145,7 +154,7 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"name":        func() string { return gen.name },
 		"cName":       func() string { return utils.Capitalize(gen.name) },
 		"lName":       func() string { return utils.Uncapitalize(gen.name) },
-		"needBody":    func(r *rdl.Resource) bool { return gen.needBody(r) },
+		"needBody":    needBodyFunc,
 		"bodyObj":     func(r *rdl.Resource) string { return gen.getBodyObj(r) },
 		"iMethod":     func(r *rdl.Resource) string { return gen.clientMethodSignature(r) + ";" },
 		"builderExt":  func(r *rdl.Resource) string { return gen.builderExt(r) },
@@ -154,6 +163,7 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"returnType":  func(r *rdl.Resource) string { return utils.JavaType(gen.registry, r.Type, true, "", "")},
 		"needExpect":  needExpectFunc,
 		"needImportHashSet":  needImportHashSetFunc,
+		"needImportJsonProcessingException": needImportJsonProcessingExceptionFunc,
 	}
 	t := template.Must(template.New(gen.name).Funcs(funcMap).Parse(templateSource))
 	return t.Execute(gen.writer, gen.schema)
@@ -221,8 +231,8 @@ import com.yahoo.parsec.clients.DefaultAsyncCompletionHandler;
 import com.yahoo.parsec.clients.ParsecAsyncHttpClient;
 import com.yahoo.parsec.clients.ParsecAsyncHttpRequest;
 import com.yahoo.parsec.clients.ParsecAsyncHttpRequest.Builder;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
+{{if needImportJsonProcessingException .Resources}}
+import com.fasterxml.jackson.core.JsonProcessingException;{{end}}
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -238,7 +248,7 @@ import java.util.concurrent.ExecutionException;
 public class {{cName}}ClientImpl implements {{cName}}Client {
 
     /** Logger. */
-    private static final Logger LOGGER = LoggerFactory.getLogger(SampleClientImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger({{cName}}ClientImpl.class);
 
     /** ParsecAsyncHttpClient. */
     private final ParsecAsyncHttpClient parsecAsyncHttpClient;
