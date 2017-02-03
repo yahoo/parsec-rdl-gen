@@ -238,7 +238,7 @@ import java.util.concurrent.ExecutionException;
 public class {{cName}}ClientImpl implements {{cName}}Client {
 
     /** Logger. */
-    private static final Logger LOGGER = LoggerFactory.getLogger(SampleClientImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger({{cName}}ClientImpl.class);
 
     /** ParsecAsyncHttpClient. */
     private final ParsecAsyncHttpClient parsecAsyncHttpClient;
