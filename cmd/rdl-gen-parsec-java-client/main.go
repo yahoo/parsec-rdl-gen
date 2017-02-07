@@ -53,7 +53,7 @@ func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns str
 
 	reg := rdl.NewTypeRegistry(schema)
 
-	packageSrcDir, err := utils.JavaGenerationSourceDir(schema, ns)
+	packageSrcDir, err := utils.JavaGenerationDir(outdir, schema, ns)
 	if err != nil {
 		return err
 	}
@@ -208,7 +208,7 @@ func (gen *javaClientGenerator) needBody(r *rdl.Resource) bool {
 }
 
 const javaClientInterfaceTemplate = `{{origHeader}}
-package {{origPackage}};
+package {{origPackage}}.parsec_generated;
 
 import java.util.concurrent.CompletableFuture;
 import {{package}}.ResourceException;
@@ -221,7 +221,7 @@ public interface {{cName}}Client {
 }
 `
 const javaClientTemplate = `{{origHeader}}
-package {{origPackage}};
+package {{origPackage}}.parsec_generated;
 
 import {{package}}.ResourceException;
 {{range .Types}}{{if .StructTypeDef}}{{if .StructTypeDef.Name}}import {{package}}.{{.StructTypeDef.Name}};
