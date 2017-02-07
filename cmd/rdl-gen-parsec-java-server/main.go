@@ -1101,7 +1101,7 @@ func (gen *javaServerGenerator) extendedValueAnnotation(annotations map[rdl.Exte
 		case "country_code":
 			buffer.WriteString(generateAnnotation("@CountryCode", value))
 		case "currency":
-			buffer.WriteString(generateAnnotation("@Currency", value))
+			buffer.WriteString(generateAnnotation("@ValidCurrency", value))
 		case "language_tag":
 			buffer.WriteString(generateAnnotation("@LanguageTag", value))
 		case "named":
@@ -1150,7 +1150,7 @@ func (gen *javaServerGenerator) generateImportClass(r *rdl.Resource) {
 			case "country_code":
 				gen.appendImportClass(ParsecConstraintPackage + ".CountryCode")
 			case "currency":
-				gen.appendImportClass(ParsecConstraintPackage + ".Currency")
+				gen.appendImportClass(ParsecConstraintPackage + ".ValidCurrency")
 			case "language_tag":
 				gen.appendImportClass(ParsecConstraintPackage + ".LanguageTag")
 			case "named":

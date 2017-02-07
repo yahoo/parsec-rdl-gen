@@ -677,8 +677,8 @@ func (gen *javaModelGenerator) generateStructFieldAnnotations(annotations map[rd
 			gen.appendAnnotation("    @CountryCode", "")
 			gen.appendImportClass(ParsecConstraintPackage + ".CountryCode")
 		case "currency":
-			gen.appendAnnotation("    @Currency", "")
-			gen.appendImportClass(ParsecConstraintPackage + ".Currency")
+			gen.appendAnnotation("    @ValidCurrency", "")
+			gen.appendImportClass(ParsecConstraintPackage + ".ValidCurrency")
 		case "language_tag":
 			gen.appendAnnotation("    @LanguageTag", "")
 			gen.appendImportClass(ParsecConstraintPackage + ".LanguageTag")
