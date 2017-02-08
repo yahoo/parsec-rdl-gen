@@ -33,7 +33,8 @@ func main() {
 	flag.String("s", "", "RDL source file")
 	namespace := flag.String("ns", "", "Namespace")
 	flag.Parse()
-	data, err := ioutil.ReadAll(os.Stdin)
+	//data, err := ioutil.ReadAll(os.Stdin)
+	data, err := ioutil.ReadFile("./cobrandTest.json")
 	banner := "parsec-rdl-gen (development version)"
 
 	if err == nil {
@@ -53,51 +54,38 @@ func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns str
 
 	reg := rdl.NewTypeRegistry(schema)
 
-	packageSrcDir, err := utils.JavaGenerationDir(outdir, schema, ns)
+	packageDir, err := utils.JavaGenerationDir(outdir, schema, ns)
 	if err != nil {
 		return err
 	}
 
 	cName := utils.Capitalize(string(schema.Name))
 
-	_, filePath := utils.GetOutputPathInfo(packageSrcDir, cName, "ClientImpl.java")
-	if _, err := os.Stat(filePath); err == nil {
-		fmt.Fprintln(os.Stderr, "Warning: interface implementation class exists, ignore: ", filePath)
-	} else {
-		out, file, _, err := utils.OutputWriter(packageSrcDir, cName, "ClientImpl.java")
-		if err != nil {
-			return err
-		}
-		gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
-		gen.processTemplate(javaClientTemplate)
-		out.Flush()
-		file.Close()
-		if gen.err != nil {
-			return gen.err
-		}
+	out, file, _, err := utils.OutputWriter(packageDir, cName, "ClientImpl.java")
+	if err != nil {
+		return err
+	}
+	gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
+	gen.processTemplate(javaClientTemplate)
+	out.Flush()
+	file.Close()
+	if gen.err != nil {
+		return gen.err
 	}
 
-	_, filePath = utils.GetOutputPathInfo(packageSrcDir, cName, "Client.java")
-	if _, err := os.Stat(filePath); err == nil {
-		fmt.Fprintln(os.Stderr, "Warning: interface class exists, ignore: ", filePath)
-	} else {
-		out, file, _, err := utils.OutputWriter(packageSrcDir, cName, "Client.java")
-		if err != nil {
-			return err
-		}
-		gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
-		gen.processTemplate(javaClientInterfaceTemplate)
-		out.Flush()
-		file.Close()
-		if gen.err != nil {
-			return gen.err
-		}
+	out, file, _, err = utils.OutputWriter(packageDir, cName, "Client.java")
+	if err != nil {
+		return err
 	}
-
-	packageDir, err := utils.JavaGenerationDir(outdir, schema, ns)
+	gen.processTemplate(javaClientInterfaceTemplate)
+	out.Flush()
+	file.Close()
+	if gen.err != nil {
+		return gen.err
+	}
 
 	//ResourceException - the throawable wrapper for alternate return types
-	out, file, _, err := utils.OutputWriter(packageDir, "ResourceException", ".java")
+	out, file, _, err = utils.OutputWriter(packageDir, "ResourceException", ".java")
 	if err != nil {
 		return err
 	}
