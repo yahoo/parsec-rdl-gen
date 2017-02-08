@@ -76,6 +76,7 @@ func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns str
 	if err != nil {
 		return err
 	}
+	gen = &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
 	gen.processTemplate(javaClientInterfaceTemplate)
 	out.Flush()
 	file.Close()
