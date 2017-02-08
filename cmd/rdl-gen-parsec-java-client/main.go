@@ -33,8 +33,7 @@ func main() {
 	flag.String("s", "", "RDL source file")
 	namespace := flag.String("ns", "", "Namespace")
 	flag.Parse()
-	//data, err := ioutil.ReadAll(os.Stdin)
-	data, err := ioutil.ReadFile("./cobrandTest.json")
+	data, err := ioutil.ReadAll(os.Stdin)
 	banner := "parsec-rdl-gen (development version)"
 
 	if err == nil {
