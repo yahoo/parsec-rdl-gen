@@ -39,7 +39,7 @@ public class SampleClientImpl implements SampleClient {
     private String url;
 
     /** Headers. */
-    private final Map<String, String> headers;
+    private Map<String, String> defaultHeaders;
 
     /**
      * connection timeout.
@@ -50,6 +50,10 @@ public class SampleClientImpl implements SampleClient {
      * total connections.
      */
     private static final int MAXIMUM_CONNECTIONS_TOTAL = 50;
+
+    public SampleClientImpl(String url) {
+        this(url, null);
+    }
 
     public SampleClientImpl(
         String url,
@@ -71,7 +75,7 @@ public class SampleClientImpl implements SampleClient {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = new ObjectMapper();
         this.url = url;
-        this.headers = headers;
+        this.defaultHeaders = headers;
     }
 
     public SampleClientImpl(
@@ -83,10 +87,15 @@ public class SampleClientImpl implements SampleClient {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = objectMapper;
         this.url = url;
-        this.headers = headers;
+        this.defaultHeaders = headers;
     }
 
-    private ParsecAsyncHttpRequest getRequest(String method, URI uri, String body) throws ResourceException {
+    private ParsecAsyncHttpRequest getRequest(
+            String method,
+            Map<String, String> headers,
+            URI uri,
+            String body
+    ) throws ResourceException {
         Builder builder = new Builder();
 
         builder.setUri(uri);
@@ -110,15 +119,26 @@ public class SampleClientImpl implements SampleClient {
         return request;
     }
 
+    public Map<String, String> getDefaultHeaders() {
+        return defaultHeaders;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+        this.defaultHeaders = headers;
+    }
+
     @Override
-    public CompletableFuture<User> getUser(int id) throws ResourceException {
+    public CompletableFuture<User> getUser(Map<String, String> headers, int id) throws ResourceException {
         String path = "/user/{id}";
         String body = null;
 
         URI uri = UriBuilder.fromUri(url).path(path)
                             .resolveTemplate("id", id)
                             .build();
-        ParsecAsyncHttpRequest request = getRequest("GET", uri, body);
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest request = getRequest("GET", headers, uri, body);
 
 
         AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
