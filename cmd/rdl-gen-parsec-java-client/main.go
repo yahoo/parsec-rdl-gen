@@ -198,6 +198,7 @@ func (gen *javaClientGenerator) needBody(r *rdl.Resource) bool {
 const javaClientInterfaceTemplate = `{{origHeader}}
 package {{origPackage}}.parsec_generated;
 
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import {{package}}.ResourceException;
 {{range .Types}}{{if .StructTypeDef}}{{if .StructTypeDef.Name}}import {{package}}.{{.StructTypeDef.Name}};
@@ -248,7 +249,7 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
     private String url;
 
     /** Headers. */
-    private final Map<String, String> headers;
+    private Map<String, String> defaultHeaders;
 
     /**
      * connection timeout.
@@ -259,6 +260,10 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
      * total connections.
      */
     private static final int MAXIMUM_CONNECTIONS_TOTAL = 50;
+
+    public {{cName}}ClientImpl(String url) {
+        this(url, null);
+    }
 
     public {{cName}}ClientImpl(
         String url,
@@ -280,7 +285,7 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = new ObjectMapper();
         this.url = url;
-        this.headers = headers;
+        this.defaultHeaders = headers;
     }
 
     public {{cName}}ClientImpl(
@@ -292,10 +297,15 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = objectMapper;
         this.url = url;
-        this.headers = headers;
+        this.defaultHeaders = headers;
     }
 
-    private ParsecAsyncHttpRequest getRequest(String method, URI uri, String body) throws ResourceException {
+    private ParsecAsyncHttpRequest getRequest(
+            String method,
+            Map<String, String> headers,
+            URI uri,
+            String body
+    ) throws ResourceException {
         Builder builder = new Builder();
 
         builder.setUri(uri);
@@ -318,6 +328,14 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
         }
         return request;
     }
+
+    public Map<String, String> getDefaultHeaders() {
+        return defaultHeaders;
+    }
+
+    public void setHeaders(Map<String, String> headers) {
+        this.defaultHeaders = headers;
+    }
 {{range .Resources}}
     @Override
     {{methodSig .}} {
@@ -332,7 +350,10 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
         }
 {{end}}
         URI uri = UriBuilder.fromUri(url).path(path){{builderExt .}}
-        ParsecAsyncHttpRequest request = getRequest("{{.Method}}", uri, body);
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest request = getRequest("{{.Method}}", headers, uri, body);
 
 {{if needExpect .}}
         Set<Integer> expectedStatus = new HashSet<>();
@@ -388,16 +409,9 @@ func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource) string {
 	reg := gen.registry
 	returnType := utils.JavaType(reg, r.Type, true, "", "")
 	methName, params := javaMethodName(reg, r)
-	sparams := ""
+	sparams := "Map<String, String> headers"
 	if len(params) > 0 {
-		sparams = strings.Join(params, ", ")
-	}
-	if len(r.Outputs) > 0 {
-		if sparams == "" {
-			sparams = "java.util.Map<String,java.util.List<String>> headers"
-		} else {
-			sparams = sparams + ", java.util.Map<String,java.util.List<String>> headers"
-		}
+		sparams = sparams + ", " + strings.Join(params, ", ")
 	}
 	return "CompletableFuture<" + returnType + "> " + methName + "(" + sparams + ") throws ResourceException"
 }
