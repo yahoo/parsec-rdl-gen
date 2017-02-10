@@ -126,8 +126,9 @@ public class SampleClientImpl implements SampleClient {
         return defaultHeaders;
     }
 
-    public void setHeaders(Map<String, String> headers) {
-        this.defaultHeaders = headers;
+    @Override
+    public CompletableFuture<User> getUser(int id) throws ResourceException {
+        return getUser(null, id);
     }
 
     @Override
@@ -147,6 +148,11 @@ public class SampleClientImpl implements SampleClient {
         AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
 
         return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
+    }
+
+    @Override
+    public CompletableFuture<User> postUser(User user) throws ResourceException {
+        return postUser(null, user);
     }
 
     @Override
@@ -178,6 +184,11 @@ public class SampleClientImpl implements SampleClient {
     }
 
     @Override
+    public CompletableFuture<User> putUser(int id, User user) throws ResourceException {
+        return putUser(null, id, user);
+    }
+
+    @Override
     public CompletableFuture<User> putUser(Map<String, String> headers, int id, User user) throws ResourceException {
         String path = "/user/{id}";
         String body = null;
@@ -204,6 +215,11 @@ public class SampleClientImpl implements SampleClient {
     }
 
     @Override
+    public CompletableFuture<User> deleteUser(int id) throws ResourceException {
+        return deleteUser(null, id);
+    }
+
+    @Override
     public CompletableFuture<User> deleteUser(Map<String, String> headers, int id) throws ResourceException {
         String path = "/user/{id}";
         String body = null;
@@ -224,6 +240,11 @@ public class SampleClientImpl implements SampleClient {
         AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class, expectedStatus);
 
         return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
+    }
+
+    @Override
+    public CompletableFuture<Users> getUsers(String ids) throws ResourceException {
+        return getUsers(null, ids);
     }
 
     @Override

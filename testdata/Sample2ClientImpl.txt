@@ -123,8 +123,9 @@ public class SampleClientImpl implements SampleClient {
         return defaultHeaders;
     }
 
-    public void setHeaders(Map<String, String> headers) {
-        this.defaultHeaders = headers;
+    @Override
+    public CompletableFuture<User> getUser(int id) throws ResourceException {
+        return getUser(null, id);
     }
 
     @Override
@@ -139,6 +140,29 @@ public class SampleClientImpl implements SampleClient {
             headers = getDefaultHeaders();
         }
         ParsecAsyncHttpRequest request = getRequest("GET", headers, uri, body);
+
+
+        AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
+
+        return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
+    }
+
+    @Override
+    public CompletableFuture<User> postUser() throws ResourceException {
+        return postUser(null);
+    }
+
+    @Override
+    public CompletableFuture<User> postUser(Map<String, String> headers) throws ResourceException {
+        String path = "/wssid";
+        String body = null;
+
+        URI uri = UriBuilder.fromUri(url).path(path)
+                            .build();
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest request = getRequest("POST", headers, uri, body);
 
 
         AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);

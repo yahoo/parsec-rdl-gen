@@ -138,13 +138,16 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"header":      func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":     func() string { return utils.JavaGenerationPackage(gen.schema, gen.ns) },
 		"comment":     commentFun,
-		"methodSig":   func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r) },
+		"methodSigH":  func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r, true) },
+		"methodSig":   func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r, false) },
+		"OLContent":   func(r *rdl.Resource) string { return gen.clientMethodOverloadContent(r) },
 		"name":        func() string { return gen.name },
 		"cName":       func() string { return utils.Capitalize(gen.name) },
 		"lName":       func() string { return utils.Uncapitalize(gen.name) },
 		"needBody":    needBodyFunc,
 		"bodyObj":     func(r *rdl.Resource) string { return gen.getBodyObj(r) },
-		"iMethod":     func(r *rdl.Resource) string { return gen.clientMethodSignature(r) + ";" },
+		"iMethodH":    func(r *rdl.Resource) string { return gen.clientMethodSignature(r, true) + ";" },
+		"iMethod":     func(r *rdl.Resource) string { return gen.clientMethodSignature(r, false) + ";" },
 		"builderExt":  func(r *rdl.Resource) string { return gen.builderExt(r) },
 		"origPackage": func() string { return utils.JavaGenerationOrigPackage(gen.schema, gen.ns) },
 		"origHeader":  func() string { return utils.JavaGenerationOrigHeader(gen.banner) },
@@ -206,7 +209,8 @@ import {{package}}.ResourceException;
 
 public interface {{cName}}Client {
 {{range .Resources}}
-    {{iMethod .}}{{end}}
+    {{iMethod .}}
+    {{iMethodH .}}{{end}}
 }
 `
 const javaClientTemplate = `{{origHeader}}
@@ -332,13 +336,14 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
     public Map<String, String> getDefaultHeaders() {
         return defaultHeaders;
     }
-
-    public void setHeaders(Map<String, String> headers) {
-        this.defaultHeaders = headers;
-    }
 {{range .Resources}}
     @Override
     {{methodSig .}} {
+        {{OLContent .}}
+    }
+
+    @Override
+    {{methodSigH .}} {
         String path = "{{.Path}}";
         String body = null;
 {{if needBody .}}
@@ -377,7 +382,7 @@ func safeTypeVarName(rtype rdl.TypeRef) rdl.TypeName {
 }
 
 // todo: duplicate with server code, need integrate
-func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource) (string, []string) {
+func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, needParamWithType bool) (string, []string) {
 	var params []string
 	bodyType := string(safeTypeVarName(r.Type))
 	for _, v := range r.Inputs {
@@ -390,7 +395,11 @@ func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource) (string, []string) {
 			bodyType = string(safeTypeVarName(v.Type))
 		}
 		optional := false // but different with server code, how?
-		params = append(params, utils.JavaType(reg, v.Type, optional, "", "")+" "+javaName(k))
+		if (needParamWithType) {
+			params = append(params, utils.JavaType(reg, v.Type, optional, "", "") + " " + javaName(k))
+		} else {
+			params = append(params, javaName(k))
+		}
 	}
 	return strings.ToLower(string(r.Method)) + string(bodyType), params
 }
@@ -405,15 +414,31 @@ func javaName(name rdl.Identifier) string {
 	}
 }
 
-func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource) string {
+func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource, needHeader bool) string {
 	reg := gen.registry
 	returnType := utils.JavaType(reg, r.Type, true, "", "")
-	methName, params := javaMethodName(reg, r)
-	sparams := "Map<String, String> headers"
+	needParamWithType := true
+	methName, params := javaMethodName(reg, r, needParamWithType)
+	sparams := ""
+	if (needHeader) {
+		sparams = "Map<String, String> headers"
+	}
 	if len(params) > 0 {
-		sparams = sparams + ", " + strings.Join(params, ", ")
+		if (sparams != "") {
+			sparams = sparams + ", "
+		}
+		sparams = sparams + strings.Join(params, ", ")
 	}
 	return "CompletableFuture<" + returnType + "> " + methName + "(" + sparams + ") throws ResourceException"
 }
 
-
+func (gen *javaClientGenerator) clientMethodOverloadContent(r *rdl.Resource) string {
+	reg := gen.registry
+	needParamWithType := false
+	methName, params := javaMethodName(reg, r, needParamWithType)
+	paramsWithNull := "null"
+	if len(params) > 0 {
+		paramsWithNull = paramsWithNull + ", " + strings.Join(params, ", ")
+	}
+	return "return " + methName + "(" + paramsWithNull + ");"
+}

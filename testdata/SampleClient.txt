@@ -13,9 +13,14 @@ import com.example.parsec_generated.Users;
 
 public interface SampleClient {
 
+    CompletableFuture<User> getUser(int id) throws ResourceException;
     CompletableFuture<User> getUser(Map<String, String> headers, int id) throws ResourceException;
+    CompletableFuture<User> postUser(User user) throws ResourceException;
     CompletableFuture<User> postUser(Map<String, String> headers, User user) throws ResourceException;
+    CompletableFuture<User> putUser(int id, User user) throws ResourceException;
     CompletableFuture<User> putUser(Map<String, String> headers, int id, User user) throws ResourceException;
+    CompletableFuture<User> deleteUser(int id) throws ResourceException;
     CompletableFuture<User> deleteUser(Map<String, String> headers, int id) throws ResourceException;
+    CompletableFuture<Users> getUsers(String ids) throws ResourceException;
     CompletableFuture<Users> getUsers(Map<String, String> headers, String ids) throws ResourceException;
 }
