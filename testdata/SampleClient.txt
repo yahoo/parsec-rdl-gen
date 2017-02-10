@@ -4,6 +4,8 @@
 //
 package com.example.parsec_generated;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import com.example.parsec_generated.ResourceException;
 import com.example.parsec_generated.User;
@@ -13,8 +15,13 @@ import com.example.parsec_generated.Users;
 public interface SampleClient {
 
     CompletableFuture<User> getUser(int id) throws ResourceException;
+    CompletableFuture<User> getUser(Map<String, List<String>> headers, int id) throws ResourceException;
     CompletableFuture<User> postUser(User user) throws ResourceException;
+    CompletableFuture<User> postUser(Map<String, List<String>> headers, User user) throws ResourceException;
     CompletableFuture<User> putUser(int id, User user) throws ResourceException;
+    CompletableFuture<User> putUser(Map<String, List<String>> headers, int id, User user) throws ResourceException;
     CompletableFuture<User> deleteUser(int id) throws ResourceException;
+    CompletableFuture<User> deleteUser(Map<String, List<String>> headers, int id) throws ResourceException;
     CompletableFuture<Users> getUsers(String ids) throws ResourceException;
+    CompletableFuture<Users> getUsers(Map<String, List<String>> headers, String ids) throws ResourceException;
 }

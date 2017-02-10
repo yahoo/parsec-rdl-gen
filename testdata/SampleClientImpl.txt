@@ -23,6 +23,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -42,7 +43,7 @@ public class SampleClientImpl implements SampleClient {
     private String url;
 
     /** Headers. */
-    private final Map<String, String> headers;
+    private final Map<String, List<String>> defaultHeaders;
 
     /**
      * connection timeout.
@@ -54,9 +55,13 @@ public class SampleClientImpl implements SampleClient {
      */
     private static final int MAXIMUM_CONNECTIONS_TOTAL = 50;
 
+    public SampleClientImpl(String url) {
+        this(url, null);
+    }
+
     public SampleClientImpl(
         String url,
-        Map<String, String> headers
+        Map<String, List<String>> headers
     ) {
 
         ParsecAsyncHttpClient client  = null;
@@ -74,28 +79,36 @@ public class SampleClientImpl implements SampleClient {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = new ObjectMapper();
         this.url = url;
-        this.headers = headers;
+        this.defaultHeaders = headers;
     }
 
     public SampleClientImpl(
             ParsecAsyncHttpClient client,
             ObjectMapper objectMapper,
             String url,
-            Map<String, String> headers
+            Map<String, List<String>> headers
     ) {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = objectMapper;
         this.url = url;
-        this.headers = headers;
+        this.defaultHeaders = headers;
     }
 
-    private ParsecAsyncHttpRequest getRequest(String method, URI uri, String body) throws ResourceException {
+    private ParsecAsyncHttpRequest getRequest(
+            String method,
+            Map<String, List<String>> headers,
+            URI uri,
+            String body
+    ) throws ResourceException {
         Builder builder = new Builder();
 
         builder.setUri(uri);
         if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                builder.addHeader(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+                String headerKey = entry.getKey();
+                for (String headerValue: entry.getValue()) {
+                    builder.addHeader(headerKey, headerValue);
+                }
             }
         }
 
@@ -113,15 +126,27 @@ public class SampleClientImpl implements SampleClient {
         return request;
     }
 
+    public Map<String, List<String>> getDefaultHeaders() {
+        return defaultHeaders;
+    }
+
     @Override
     public CompletableFuture<User> getUser(int id) throws ResourceException {
+        return getUser(null, id);
+    }
+
+    @Override
+    public CompletableFuture<User> getUser(Map<String, List<String>> headers, int id) throws ResourceException {
         String path = "/user/{id}";
         String body = null;
 
         URI uri = UriBuilder.fromUri(url).path(path)
                             .resolveTemplate("id", id)
                             .build();
-        ParsecAsyncHttpRequest request = getRequest("GET", uri, body);
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest request = getRequest("GET", headers, uri, body);
 
 
         AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
@@ -131,6 +156,11 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> postUser(User user) throws ResourceException {
+        return postUser(null, user);
+    }
+
+    @Override
+    public CompletableFuture<User> postUser(Map<String, List<String>> headers, User user) throws ResourceException {
         String path = "/user";
         String body = null;
 
@@ -143,7 +173,10 @@ public class SampleClientImpl implements SampleClient {
 
         URI uri = UriBuilder.fromUri(url).path(path)
                             .build();
-        ParsecAsyncHttpRequest request = getRequest("POST", uri, body);
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest request = getRequest("POST", headers, uri, body);
 
 
         Set<Integer> expectedStatus = new HashSet<>();
@@ -156,6 +189,11 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> putUser(int id, User user) throws ResourceException {
+        return putUser(null, id, user);
+    }
+
+    @Override
+    public CompletableFuture<User> putUser(Map<String, List<String>> headers, int id, User user) throws ResourceException {
         String path = "/user/{id}";
         String body = null;
 
@@ -169,7 +207,10 @@ public class SampleClientImpl implements SampleClient {
         URI uri = UriBuilder.fromUri(url).path(path)
                             .resolveTemplate("id", id)
                             .build();
-        ParsecAsyncHttpRequest request = getRequest("PUT", uri, body);
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest request = getRequest("PUT", headers, uri, body);
 
 
         AsyncHandler<User> asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
@@ -179,13 +220,21 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> deleteUser(int id) throws ResourceException {
+        return deleteUser(null, id);
+    }
+
+    @Override
+    public CompletableFuture<User> deleteUser(Map<String, List<String>> headers, int id) throws ResourceException {
         String path = "/user/{id}";
         String body = null;
 
         URI uri = UriBuilder.fromUri(url).path(path)
                             .resolveTemplate("id", id)
                             .build();
-        ParsecAsyncHttpRequest request = getRequest("DELETE", uri, body);
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest request = getRequest("DELETE", headers, uri, body);
 
 
         Set<Integer> expectedStatus = new HashSet<>();
@@ -199,13 +248,21 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<Users> getUsers(String ids) throws ResourceException {
+        return getUsers(null, ids);
+    }
+
+    @Override
+    public CompletableFuture<Users> getUsers(Map<String, List<String>> headers, String ids) throws ResourceException {
         String path = "/users";
         String body = null;
 
         URI uri = UriBuilder.fromUri(url).path(path)
                             .queryParam("ids", ids)
                             .build();
-        ParsecAsyncHttpRequest request = getRequest("GET", uri, body);
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest request = getRequest("GET", headers, uri, body);
 
 
         AsyncHandler<Users> asyncHandler = new DefaultAsyncCompletionHandler<>(Users.class);
