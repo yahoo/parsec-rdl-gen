@@ -138,15 +138,18 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"header":      func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":     func() string { return utils.JavaGenerationPackage(gen.schema, gen.ns) },
 		"comment":     commentFun,
-		"methodSigH":  func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r, true) },
+		"methodSigWithHeader":
+		               func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r, true) },
 		"methodSig":   func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r, false) },
-		"OLContent":   func(r *rdl.Resource) string { return gen.clientMethodOverloadContent(r) },
+		"ContentOfNoHeaderMethod":
+		               func(r *rdl.Resource) string { return gen.clientMethodOverloadContent(r) },
 		"name":        func() string { return gen.name },
 		"cName":       func() string { return utils.Capitalize(gen.name) },
 		"lName":       func() string { return utils.Uncapitalize(gen.name) },
 		"needBody":    needBodyFunc,
 		"bodyObj":     func(r *rdl.Resource) string { return gen.getBodyObj(r) },
-		"iMethodH":    func(r *rdl.Resource) string { return gen.clientMethodSignature(r, true) + ";" },
+		"iMethodWithHeader":
+		               func(r *rdl.Resource) string { return gen.clientMethodSignature(r, true) + ";" },
 		"iMethod":     func(r *rdl.Resource) string { return gen.clientMethodSignature(r, false) + ";" },
 		"builderExt":  func(r *rdl.Resource) string { return gen.builderExt(r) },
 		"origPackage": func() string { return utils.JavaGenerationOrigPackage(gen.schema, gen.ns) },
@@ -201,6 +204,7 @@ func (gen *javaClientGenerator) needBody(r *rdl.Resource) bool {
 const javaClientInterfaceTemplate = `{{origHeader}}
 package {{origPackage}}.parsec_generated;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import {{package}}.ResourceException;
@@ -210,7 +214,7 @@ import {{package}}.ResourceException;
 public interface {{cName}}Client {
 {{range .Resources}}
     {{iMethod .}}
-    {{iMethodH .}}{{end}}
+    {{iMethodWithHeader .}}{{end}}
 }
 `
 const javaClientTemplate = `{{origHeader}}
@@ -234,6 +238,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 {{if needImportHashSet .Resources}}import java.util.HashSet;
 import java.util.Set;{{end}}
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -253,7 +258,7 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
     private String url;
 
     /** Headers. */
-    private Map<String, String> defaultHeaders;
+    private final Map<String, List<String>> defaultHeaders;
 
     /**
      * connection timeout.
@@ -271,7 +276,7 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
 
     public {{cName}}ClientImpl(
         String url,
-        Map<String, String> headers
+        Map<String, List<String>> headers
     ) {
 
         ParsecAsyncHttpClient client  = null;
@@ -296,7 +301,7 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
             ParsecAsyncHttpClient client,
             ObjectMapper objectMapper,
             String url,
-            Map<String, String> headers
+            Map<String, List<String>> headers
     ) {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = objectMapper;
@@ -306,7 +311,7 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
 
     private ParsecAsyncHttpRequest getRequest(
             String method,
-            Map<String, String> headers,
+            Map<String, List<String>> headers,
             URI uri,
             String body
     ) throws ResourceException {
@@ -314,8 +319,11 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
 
         builder.setUri(uri);
         if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                builder.addHeader(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+                String headerKey = entry.getKey();
+                for (String headerValue: entry.getValue()) {
+                    builder.addHeader(headerKey, headerValue);
+                }
             }
         }
 
@@ -333,17 +341,17 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
         return request;
     }
 
-    public Map<String, String> getDefaultHeaders() {
+    public Map<String, List<String>> getDefaultHeaders() {
         return defaultHeaders;
     }
 {{range .Resources}}
     @Override
     {{methodSig .}} {
-        {{OLContent .}}
+        {{ContentOfNoHeaderMethod .}}
     }
 
     @Override
-    {{methodSigH .}} {
+    {{methodSigWithHeader .}} {
         String path = "{{.Path}}";
         String body = null;
 {{if needBody .}}
@@ -421,7 +429,7 @@ func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource, needHeade
 	methName, params := javaMethodName(reg, r, needParamWithType)
 	sparams := ""
 	if (needHeader) {
-		sparams = "Map<String, String> headers"
+		sparams = "Map<String, List<String>> headers"
 	}
 	if len(params) > 0 {
 		if (sparams != "") {
