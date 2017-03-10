@@ -374,7 +374,7 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				i = items
 			}
 		}
-		gitems := JavaType(reg, i, false, "", "")
+		gitems := JavaType(reg, i, true, "", "")
 		//return gitems + "[]" //if arrays, not lists
 		return "List<" + gitems + ">"
 	case rdl.BaseTypeMap:
