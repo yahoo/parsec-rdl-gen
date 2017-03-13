@@ -392,8 +392,8 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				i = items
 			}
 		}
-		gkeys := JavaType(reg, k, false, "", "")
-		gitems := JavaType(reg, i, false, "", "")
+		gkeys := JavaType(reg, k, true, "", "")
+		gitems := JavaType(reg, i, true, "", "")
 		return "Map<" + gkeys + "," + gitems + ">"
 	case rdl.BaseTypeStruct:
 		switch t.Variant {
