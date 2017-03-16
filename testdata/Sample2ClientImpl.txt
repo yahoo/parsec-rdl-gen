@@ -128,12 +128,12 @@ public class SampleClientImpl implements SampleClient {
     }
 
     @Override
-    public CompletableFuture<User> getUser(int id) throws ResourceException {
-        return getUser(null, id);
+    public CompletableFuture<User> getUserId(int id) throws ResourceException {
+        return getUserId(null, id);
     }
 
     @Override
-    public CompletableFuture<User> getUser(Map<String, List<String>> headers, int id) throws ResourceException {
+    public CompletableFuture<User> getUserId(Map<String, List<String>> headers, int id) throws ResourceException {
         String path = "/user/{id}";
         String body = null;
 
@@ -152,12 +152,12 @@ public class SampleClientImpl implements SampleClient {
     }
 
     @Override
-    public CompletableFuture<User> postUser() throws ResourceException {
-        return postUser(null);
+    public CompletableFuture<User> fetchWssid() throws ResourceException {
+        return fetchWssid(null);
     }
 
     @Override
-    public CompletableFuture<User> postUser(Map<String, List<String>> headers) throws ResourceException {
+    public CompletableFuture<User> fetchWssid(Map<String, List<String>> headers) throws ResourceException {
         String path = "/wssid";
         String body = null;
 
