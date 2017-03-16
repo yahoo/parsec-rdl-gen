@@ -394,7 +394,8 @@ func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, needParamWithType boo
 	var params []string
 	bodyType := string(safeTypeVarName(r.Type))
 	for _, v := range r.Inputs {
-		if v.Context != "" { //ignore these legacy things
+		if v.Context != "" {
+			//ignore these legacy things
 			log.Println("Warning: v1 style context param ignored:", v.Name, v.Context)
 			continue
 		}
@@ -409,7 +410,11 @@ func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, needParamWithType boo
 			params = append(params, javaName(k))
 		}
 	}
-	return strings.ToLower(string(r.Method)) + string(bodyType), params
+	if r.Name != "" {
+		return utils.Uncapitalize(string(r.Name)), params
+	} else {
+		return strings.ToLower(string(r.Method)) + string(bodyType), params
+	}
 }
 
 // todo: duplicate with java-server.go
