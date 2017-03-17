@@ -352,32 +352,32 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
 
     @Override
     {{methodSigWithHeader .}} {
-        String path = "{{.Path}}";
-        String body = null;
+        String x_path = "{{.Path}}";
+        String x_body = null;
 {{if needBody .}}
         try {
-            body = objectMapper.writeValueAsString({{bodyObj .}});
+            x_body = objectMapper.writeValueAsString({{bodyObj .}});
         } catch (JsonProcessingException e) {
             LOGGER.error("JsonProcessingException: " + e.getMessage());
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 {{end}}
-        URI uri = UriBuilder.fromUri(url).path(path){{builderExt .}}
+        URI x_uri = UriBuilder.fromUri(this.url).path(x_path){{builderExt .}}
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest request = getRequest("{{.Method}}", headers, uri, body);
+        ParsecAsyncHttpRequest x_request = getRequest("{{.Method}}", headers, x_uri, x_body);
 
 {{if needExpect .}}
-        Set<Integer> expectedStatus = new HashSet<>();
-        expectedStatus.add(ResourceException.{{.Expected}});
-        {{if .Alternatives}}{{range .Alternatives}}expectedStatus.add(ResourceException.{{.}});
+        Set<Integer> x_expectedStatus = new HashSet<>();
+        x_expectedStatus.add(ResourceException.{{.Expected}});
+        {{if .Alternatives}}{{range .Alternatives}}x_expectedStatus.add(ResourceException.{{.}});
 {{end}}{{end}}
-        AsyncHandler<{{returnType .}}> asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class, expectedStatus);
+        AsyncHandler<{{returnType .}}> x_asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class, x_expectedStatus);
 {{else}}
-        AsyncHandler<{{returnType .}}> asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class);
+        AsyncHandler<{{returnType .}}> x_asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class);
 {{end}}
-        return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
     }
 {{end}}
 }
