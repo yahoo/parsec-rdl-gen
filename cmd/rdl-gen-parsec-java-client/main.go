@@ -352,32 +352,32 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
 
     @Override
     {{methodSigWithHeader .}} {
-        String x_path = "{{.Path}}";
-        String x_body = null;
+        String xPath = "{{.Path}}";
+        String xBody = null;
 {{if needBody .}}
         try {
-            x_body = objectMapper.writeValueAsString({{bodyObj .}});
+            xBody = objectMapper.writeValueAsString({{bodyObj .}});
         } catch (JsonProcessingException e) {
             LOGGER.error("JsonProcessingException: " + e.getMessage());
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 {{end}}
-        URI x_uri = UriBuilder.fromUri(this.url).path(x_path){{builderExt .}}
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath){{builderExt .}}
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest x_request = getRequest("{{.Method}}", headers, x_uri, x_body);
+        ParsecAsyncHttpRequest xRequest = getRequest("{{.Method}}", headers, xUri, xBody);
 
 {{if needExpect .}}
-        Set<Integer> x_expectedStatus = new HashSet<>();
-        x_expectedStatus.add(ResourceException.{{.Expected}});
-        {{if .Alternatives}}{{range .Alternatives}}x_expectedStatus.add(ResourceException.{{.}});
+        Set<Integer> xExpectedStatus = new HashSet<>();
+        xExpectedStatus.add(ResourceException.{{.Expected}});
+        {{if .Alternatives}}{{range .Alternatives}}xExpectedStatus.add(ResourceException.{{.}});
 {{end}}{{end}}
-        AsyncHandler<{{returnType .}}> x_asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class, x_expectedStatus);
+        AsyncHandler<{{returnType .}}> xAsyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class, xExpectedStatus);
 {{else}}
-        AsyncHandler<{{returnType .}}> x_asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class);
+        AsyncHandler<{{returnType .}}> xAsyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class);
 {{end}}
-        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 {{end}}
 }
