@@ -137,21 +137,21 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> getUser(Map<String, List<String>> headers, int id) throws ResourceException {
-        String x_path = "/user/{id}";
-        String x_body = null;
+        String xPath = "/user/{id}";
+        String xBody = null;
 
-        URI x_uri = UriBuilder.fromUri(this.url).path(x_path)
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
                             .resolveTemplate("id", id)
                             .build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest x_request = getRequest("GET", headers, x_uri, x_body);
+        ParsecAsyncHttpRequest xRequest = getRequest("GET", headers, xUri, xBody);
 
 
-        AsyncHandler<User> x_asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
+        AsyncHandler<User> xAsyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
 
-        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 
     @Override
@@ -161,30 +161,30 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> postUser(Map<String, List<String>> headers, User user) throws ResourceException {
-        String x_path = "/user";
-        String x_body = null;
+        String xPath = "/user";
+        String xBody = null;
 
         try {
-            x_body = objectMapper.writeValueAsString(user);
+            xBody = objectMapper.writeValueAsString(user);
         } catch (JsonProcessingException e) {
             LOGGER.error("JsonProcessingException: " + e.getMessage());
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
-        URI x_uri = UriBuilder.fromUri(this.url).path(x_path)
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
                             .build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest x_request = getRequest("POST", headers, x_uri, x_body);
+        ParsecAsyncHttpRequest xRequest = getRequest("POST", headers, xUri, xBody);
 
 
-        Set<Integer> x_expectedStatus = new HashSet<>();
-        x_expectedStatus.add(ResourceException.CREATED);
+        Set<Integer> xExpectedStatus = new HashSet<>();
+        xExpectedStatus.add(ResourceException.CREATED);
         
-        AsyncHandler<User> x_asyncHandler = new DefaultAsyncCompletionHandler<>(User.class, x_expectedStatus);
+        AsyncHandler<User> xAsyncHandler = new DefaultAsyncCompletionHandler<>(User.class, xExpectedStatus);
 
-        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 
     @Override
@@ -194,28 +194,28 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> putUser(Map<String, List<String>> headers, int id, User user) throws ResourceException {
-        String x_path = "/user/{id}";
-        String x_body = null;
+        String xPath = "/user/{id}";
+        String xBody = null;
 
         try {
-            x_body = objectMapper.writeValueAsString(user);
+            xBody = objectMapper.writeValueAsString(user);
         } catch (JsonProcessingException e) {
             LOGGER.error("JsonProcessingException: " + e.getMessage());
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
-        URI x_uri = UriBuilder.fromUri(this.url).path(x_path)
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
                             .resolveTemplate("id", id)
                             .build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest x_request = getRequest("PUT", headers, x_uri, x_body);
+        ParsecAsyncHttpRequest xRequest = getRequest("PUT", headers, xUri, xBody);
 
 
-        AsyncHandler<User> x_asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
+        AsyncHandler<User> xAsyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
 
-        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 
     @Override
@@ -225,25 +225,25 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> deleteUser(Map<String, List<String>> headers, int id) throws ResourceException {
-        String x_path = "/user/{id}";
-        String x_body = null;
+        String xPath = "/user/{id}";
+        String xBody = null;
 
-        URI x_uri = UriBuilder.fromUri(this.url).path(x_path)
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
                             .resolveTemplate("id", id)
                             .build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest x_request = getRequest("DELETE", headers, x_uri, x_body);
+        ParsecAsyncHttpRequest xRequest = getRequest("DELETE", headers, xUri, xBody);
 
 
-        Set<Integer> x_expectedStatus = new HashSet<>();
-        x_expectedStatus.add(ResourceException.OK);
-        x_expectedStatus.add(ResourceException.NOT_MODIFIED);
+        Set<Integer> xExpectedStatus = new HashSet<>();
+        xExpectedStatus.add(ResourceException.OK);
+        xExpectedStatus.add(ResourceException.NOT_MODIFIED);
 
-        AsyncHandler<User> x_asyncHandler = new DefaultAsyncCompletionHandler<>(User.class, x_expectedStatus);
+        AsyncHandler<User> xAsyncHandler = new DefaultAsyncCompletionHandler<>(User.class, xExpectedStatus);
 
-        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 
     @Override
@@ -253,21 +253,21 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<Users> getUsers(Map<String, List<String>> headers, String ids) throws ResourceException {
-        String x_path = "/users";
-        String x_body = null;
+        String xPath = "/users";
+        String xBody = null;
 
-        URI x_uri = UriBuilder.fromUri(this.url).path(x_path)
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
                             .queryParam("ids", ids)
                             .build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest x_request = getRequest("GET", headers, x_uri, x_body);
+        ParsecAsyncHttpRequest xRequest = getRequest("GET", headers, xUri, xBody);
 
 
-        AsyncHandler<Users> x_asyncHandler = new DefaultAsyncCompletionHandler<>(Users.class);
+        AsyncHandler<Users> xAsyncHandler = new DefaultAsyncCompletionHandler<>(Users.class);
 
-        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 
 }

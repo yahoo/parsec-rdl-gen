@@ -134,21 +134,21 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> getUserId(Map<String, List<String>> headers, int id) throws ResourceException {
-        String x_path = "/user/{id}";
-        String x_body = null;
+        String xPath = "/user/{id}";
+        String xBody = null;
 
-        URI x_uri = UriBuilder.fromUri(this.url).path(x_path)
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
                             .resolveTemplate("id", id)
                             .build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest x_request = getRequest("GET", headers, x_uri, x_body);
+        ParsecAsyncHttpRequest xRequest = getRequest("GET", headers, xUri, xBody);
 
 
-        AsyncHandler<User> x_asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
+        AsyncHandler<User> xAsyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
 
-        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 
     @Override
@@ -158,20 +158,20 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> fetchWssid(Map<String, List<String>> headers) throws ResourceException {
-        String x_path = "/wssid";
-        String x_body = null;
+        String xPath = "/wssid";
+        String xBody = null;
 
-        URI x_uri = UriBuilder.fromUri(this.url).path(x_path)
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
                             .build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
-        ParsecAsyncHttpRequest x_request = getRequest("POST", headers, x_uri, x_body);
+        ParsecAsyncHttpRequest xRequest = getRequest("POST", headers, xUri, xBody);
 
 
-        AsyncHandler<User> x_asyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
+        AsyncHandler<User> xAsyncHandler = new DefaultAsyncCompletionHandler<>(User.class);
 
-        return parsecAsyncHttpClient.criticalExecute(x_request, x_asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 
 }
