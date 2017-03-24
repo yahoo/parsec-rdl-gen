@@ -5,6 +5,8 @@ package rdl
 
 import (
 	"bufio"
+	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -16,7 +18,6 @@ import (
 	"strings"
 	"text/scanner"
 	"unicode"
-	"bytes"
 )
 
 type parser struct {
@@ -191,6 +192,10 @@ func (p *parser) parseSchema() {
 				p.schema.Comment = p.mergeComment(p.schema.Comment, comment)
 				comment = ""
 				p.parseName()
+			case "base":
+				p.schema.Comment = p.mergeComment(p.schema.Comment, comment)
+				comment = ""
+				p.parseBasepath()
 			case "version":
 				p.schema.Comment = p.mergeComment(p.schema.Comment, comment)
 				comment = ""
@@ -325,6 +330,21 @@ func (p *parser) parseVersion() {
 	}
 }
 
+func (p *parser) parseBasepath() {
+	if p.err != nil {
+		return
+	}
+	if p.schema.Base != "" {
+		p.error("duplicate base path declaration")
+	} else {
+		base := p.stringLiteral("base path for resources")
+		p.schema.Comment = p.statementEnd(p.schema.Comment)
+		if p.err == nil {
+			p.schema.Base = base
+		}
+	}
+}
+
 func (p *parser) includedFile(filename string) bool {
 	if p.parent != nil {
 		return p.parent.includedFile(filename)
@@ -365,13 +385,81 @@ func (p *parser) parseInclude() {
 			p.err = err
 		} else {
 			for _, t := range schema.Types {
+				p.addTypeAnnotation(t, "x_included_from", fname)
 				p.registerType(t)
 			}
 			for _, rez := range schema.Resources {
+				if rez.Annotations == nil {
+					rez.Annotations = make(map[ExtendedAnnotation]string)
+				}
+				rez.Annotations["x_included_from"] = fname
 				p.registerResource(rez)
 			}
 			p.registerIncludedFile(path)
 		}
+	}
+}
+
+func (p *parser) hasAnnotation(anno map[ExtendedAnnotation]string, key ExtendedAnnotation) bool {
+	for k, _ := range anno {
+		if k == key {
+			return true
+		}
+	}
+	return false
+}
+
+func (p *parser) addTypeAnnotation(t *Type, key ExtendedAnnotation, value string) {
+	var anno map[ExtendedAnnotation]string
+	switch t.Variant {
+	case TypeVariantAliasTypeDef:
+		if t.AliasTypeDef.Annotations == nil {
+			t.AliasTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.AliasTypeDef.Annotations
+	case TypeVariantStringTypeDef:
+		if t.StringTypeDef.Annotations == nil {
+			t.StringTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.StringTypeDef.Annotations
+	case TypeVariantNumberTypeDef:
+		if t.NumberTypeDef.Annotations == nil {
+			t.NumberTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.NumberTypeDef.Annotations
+	case TypeVariantArrayTypeDef:
+		if t.ArrayTypeDef.Annotations == nil {
+			t.ArrayTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.ArrayTypeDef.Annotations
+	case TypeVariantMapTypeDef:
+		if t.MapTypeDef.Annotations == nil {
+			t.MapTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.MapTypeDef.Annotations
+	case TypeVariantStructTypeDef:
+		if t.StructTypeDef.Annotations == nil {
+			t.StructTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.StructTypeDef.Annotations
+	case TypeVariantBytesTypeDef:
+		if t.BytesTypeDef.Annotations == nil {
+			t.BytesTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.BytesTypeDef.Annotations
+	case TypeVariantEnumTypeDef:
+		if t.EnumTypeDef.Annotations == nil {
+			t.EnumTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.EnumTypeDef.Annotations
+	case TypeVariantUnionTypeDef:
+		if t.UnionTypeDef.Annotations == nil {
+			t.UnionTypeDef.Annotations = make(map[ExtendedAnnotation]string)
+		}
+		anno = t.UnionTypeDef.Annotations
+	}
+	if !p.hasAnnotation(anno, key) {
+		anno[key] = value
 	}
 }
 
@@ -695,6 +783,36 @@ func (p *parser) baseType(t *Type) BaseType {
 	return inThisInclude
 }
 
+func (p *parser) resolvePattern(t *Type) (string, error) {
+	if t == nil {
+		return "", errors.New("nil type can't be resolved to a pattern")
+	}
+	currentType, lastType := t, t
+	tName, tType, _ := TypeInfo(currentType)
+	for tType != TypeRef(BaseTypeString.String()) {
+		currentType = p.registry.FindType(tType)
+		if currentType == nil {
+			break
+		}
+		tName, tType, _ = TypeInfo(currentType)
+		if TypeRef(tName) == tType {
+			// we've hit the base type if tName and tType match
+			tName, tType, _ = TypeInfo(lastType)
+			return "", errors.New(fmt.Sprintf("%s is not a String type", tName))
+		}
+		lastType = currentType
+	}
+
+	if currentType == nil {
+		if p.parent != nil {
+			return p.parent.resolvePattern(lastType)
+		} else {
+			return "", errors.New(fmt.Sprintf("no String base type found for %s", tName))
+		}
+	}
+	return currentType.StringTypeDef.Pattern, nil
+}
+
 func (p *parser) parseTypeRef(expected string) TypeRef {
 	sym := string(p.identifier(expected))
 	if p.err == nil {
@@ -840,13 +958,10 @@ func (p *parser) parseStringPatternOption(t *StringTypeDef) {
 			i = strings.Index(tail, "{")
 			continue
 		}
-		if p.baseType(rt) != BaseTypeString {
-			p.error("pattern references non-string type '" + refName + "': " + pat)
-			return
-		}
-		pat := rt.StringTypeDef.Pattern
-		if pat == "" {
-			p.error("pattern references string type '" + refName + "' which has no pattern")
+
+		pat, err := p.resolvePattern(rt)
+		if err != nil {
+			p.error(fmt.Sprintf("%s", err))
 			return
 		}
 		head = head + tail[:i] + pat
@@ -1773,6 +1888,7 @@ func (p *parser) parseEnumType(typeName Identifier, supertypeName TypeRef, comme
 	t.Name = TypeName(typeName)
 	t.Type = TypeRef(supertypeName)
 	t.Comment = comment
+	comment = ""
 	var tok rune
 	c := p.skipWhitespaceExceptNewline()
 	if c == ';' {
@@ -1969,14 +2085,14 @@ func (p *parser) parseResource(comment string) *Resource {
 					r.Async = &b
 					fcomment = ""
 				case "consumes":
-					consumes,comment := p.parseCommaSeparatedValuesTillNewline(r)
+					consumes, comment := p.parseCommaSeparatedValuesTillNewline(r)
 					if len(consumes) > 0 {
 						r.Consumes = consumes
 					}
 					r.Comment = comment
 					fcomment = ""
 				case "produces":
-					produces,comment := p.parseCommaSeparatedValuesTillNewline(r)
+					produces, comment := p.parseCommaSeparatedValuesTillNewline(r)
 					if len(produces) > 0 {
 						r.Produces = produces
 					}
@@ -2020,9 +2136,6 @@ func (p *parser) parseResource(comment string) *Resource {
 				}
 				ok = true
 			}
-		}
-		if !ok {
-			p.error(r.Method + " on a resource with no corresponding input parameter")
 		}
 	}
 	return r
@@ -2183,6 +2296,7 @@ func (p *parser) addOutput(r *Resource, paramName string, input *ResourceInput) 
 	out.Header = input.Header
 	out.Optional = input.Optional
 	out.Annotations = input.Annotations
+	out.Comment = input.Comment
 	r.Outputs = append(r.Outputs, out)
 }
 
@@ -2400,7 +2514,7 @@ func (p *parser) parseCommaSeparatedValuesTillNewline(r *Resource) ([]string, st
 	for c != '\n' && c != scanner.EOF {
 		tok := p.scanner.Scan()
 		if tok == scanner.Comment {
-			comment,_ = p.parseComment(tok, comment)
+			comment, _ = p.parseComment(tok, comment)
 			if buffer.Len() > 0 {
 				values = append(values, buffer.String())
 			}
@@ -2423,16 +2537,26 @@ func (p *parser) parseCommaSeparatedValuesTillNewline(r *Resource) ([]string, st
 
 func (p *parser) isSpecialRune(ch rune) bool {
 	switch ch {
-	case '.': fallthrough
-	case ',': fallthrough
-	case ';': fallthrough
-	case '/': fallthrough
-	case '{': fallthrough
-	case '}': fallthrough
-	case '[': fallthrough
-	case ']': fallthrough
-	case '(': fallthrough
-	case ')': fallthrough
+	case '.':
+		fallthrough
+	case ',':
+		fallthrough
+	case ';':
+		fallthrough
+	case '/':
+		fallthrough
+	case '{':
+		fallthrough
+	case '}':
+		fallthrough
+	case '[':
+		fallthrough
+	case ']':
+		fallthrough
+	case '(':
+		fallthrough
+	case ')':
+		fallthrough
 	case '\n':
 		return true
 	}

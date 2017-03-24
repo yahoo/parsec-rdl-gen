@@ -29,7 +29,6 @@ func main() {
 	flag.String("s", "", "RDL source file")
 	genParsecErrorString := flag.String("e", "true", "Generate Parsec Error classes")
 	scheme := flag.String("c", "", "Scheme")
-	basePath := flag.String("b", "/api", "Base path")
 	flag.Parse()
 
 	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
@@ -40,7 +39,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			ExportToSwagger(&schema, *pOutdir, *basePath, genParsecError, *scheme)
+			ExportToSwagger(&schema, *pOutdir, genParsecError, *scheme)
 			os.Exit(0)
 		}
 	}
@@ -57,8 +56,8 @@ func checkErr(err error) {
 
 // ExportToSwagger exports the RDL schema to Swagger 2.0 format,
 //   and serves it up on the specified server endpoint is provided, or outputs to stdout otherwise.
-func ExportToSwagger(schema *rdl.Schema, outdir string, basePath string, genParsecError bool, swaggerScheme string) error {
-	swaggerData, err := swagger(schema, basePath, genParsecError, swaggerScheme)
+func ExportToSwagger(schema *rdl.Schema, outdir string, genParsecError bool, swaggerScheme string) error {
+	swaggerData, err := swagger(schema, genParsecError, swaggerScheme)
 	if err != nil {
 		return err
 	}
@@ -105,7 +104,7 @@ func ExportToSwagger(schema *rdl.Schema, outdir string, basePath string, genPars
 	return http.ListenAndServe(outdir, nil)
 }
 
-func swagger(schema *rdl.Schema, basePath string, genParsecError bool, swaggerScheme string) (*SwaggerDoc, error) {
+func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string) (*SwaggerDoc, error) {
 	reg := rdl.NewTypeRegistry(schema)
 	swag := new(SwaggerDoc)
 	swag.Swagger = "2.0"
@@ -117,15 +116,7 @@ func swagger(schema *rdl.Schema, basePath string, genParsecError bool, swaggerSc
 		swag.Schemes = append(swag.Schemes, swaggerScheme)
 	}
 
-	if basePath != "" {
-		if string([]rune(basePath)[0]) != "/" {
-			// to compatible with previous version
-			swag.BasePath = "/" + basePath
-		} else {
-			swag.BasePath = basePath
-		}
-	}
-	swag.BasePath += utils.JavaGenerationRootPath(schema, "")
+	swag.BasePath += utils.JavaGenerationRootPath(schema)
 
 	title := "API"
 	if schema.Name != "" {

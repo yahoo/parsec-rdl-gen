@@ -36,15 +36,15 @@ func JavaGenerationOrigPackage(schema *rdl.Schema, namespace string) string {
 	return string(schema.Namespace)
 }
 
-func JavaGenerationRootPath(schema *rdl.Schema, basePath string) string {
-	if basePath != "" {
+func JavaGenerationRootPath(schema *rdl.Schema) string {
+	if schema.Base != "" {
 		if schema.Version != nil {
-			if basePath != "/" {
-				return fmt.Sprintf("%s/v%d", basePath, *schema.Version)
+			if schema.Base != "/" {
+				return fmt.Sprintf("%s/v%d", schema.Base, *schema.Version)
 			}
 			return fmt.Sprintf("/v%d", *schema.Version)
 		}
-		return basePath
+		return schema.Base
 	} else if schema.Name != "" {
 		if schema.Version != nil {
 			return fmt.Sprintf("/%s/v%d", string(schema.Name), *schema.Version)
