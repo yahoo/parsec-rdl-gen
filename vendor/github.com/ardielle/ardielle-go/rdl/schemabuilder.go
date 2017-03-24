@@ -35,6 +35,11 @@ func (sb *SchemaBuilder) Version(version int32) *SchemaBuilder {
 	return sb
 }
 
+func (sb *SchemaBuilder) Base(base string) *SchemaBuilder {
+	sb.proto.Base = base
+	return sb
+}
+
 func (sb *SchemaBuilder) Comment(comment string) *SchemaBuilder {
 	sb.proto.Comment = comment
 	return sb
@@ -51,7 +56,78 @@ func (sb *SchemaBuilder) AddResource(r *Resource) *SchemaBuilder {
 }
 
 func (sb *SchemaBuilder) Build() *Schema {
+	var ordered []*Type
+	all := make(map[string]*Type)
+	resolved := make(map[string]bool)
+	for _, bt := range namesBaseType {
+		resolved[bt] = true
+	}
+	for _, t := range sb.proto.Types {
+		name, _, _ := TypeInfo(t)
+		all[string(name)] = t
+	}
+	for _, t := range sb.proto.Types {
+		name, super, _ := TypeInfo(t)
+		ordered = sb.resolve(ordered, resolved, all, string(name), string(super))
+	}
+	sb.proto.Types = ordered
 	return sb.proto
+}
+
+func (sb *SchemaBuilder) isBaseType(name string) bool {
+	switch name {
+	case "Bool", "Int8", "Int16", "Int32", "Int64", "Float32", "Float64":
+		return true
+	case "String", "Bytes", "Timestamp", "Symbol", "UUID":
+		return true
+	case "Struct", "Array", "Map", "Enum", "Union", "Any":
+		return true
+	default:
+		return false
+	}
+}
+
+func (sb *SchemaBuilder) resolve(ordered []*Type, resolved map[string]bool, all map[string]*Type, name, super string) []*Type {
+	if _, ok := resolved[name]; ok || sb.isBaseType(name) {
+		return ordered
+	}
+	t := all[name]
+	switch super {
+	case "String", "Bytes", "Bool", "Int8", "Int16", "Int32", "Int64", "Float32", "Float64", "UUID", "Timestamp":
+		//no dependencies
+	case "Array":
+		ordered = sb.resolveRef(ordered, resolved, all, string(t.ArrayTypeDef.Items))
+	case "Map":
+		ordered = sb.resolveRef(ordered, resolved, all, string(t.MapTypeDef.Items))
+		ordered = sb.resolveRef(ordered, resolved, all, string(t.MapTypeDef.Keys))
+	case "Struct":
+		for _, f := range t.StructTypeDef.Fields {
+			ordered = sb.resolveRef(ordered, resolved, all, string(f.Type))
+		}
+	default:
+		ordered = sb.resolveRef(ordered, resolved, all, string(super))
+	}
+	resolved[name] = true
+	return append(ordered, t)
+}
+
+func (sb *SchemaBuilder) resolveRef(ordered []*Type, resolved map[string]bool, all map[string]*Type, ref string) []*Type {
+	if !sb.isBaseType(ref) {
+		t := all[ref]
+		_, super, _ := TypeInfo(t)
+		ordered = sb.resolve(ordered, resolved, all, ref, string(super))
+	}
+	return ordered
+}
+
+func (sb *SchemaBuilder) find(ordered []*Type, name string) *Type {
+	for _, t := range ordered {
+		n, _, _ := TypeInfo(t)
+		if name == string(n) {
+			return t
+		}
+	}
+	return nil
 }
 
 type StringTypeBuilder struct {
@@ -380,6 +456,11 @@ func (rb *ResourceBuilder) Exception(sym string, typename string, comment string
 		rb.proto.Exceptions = make(map[string]*ExceptionDef)
 	}
 	rb.proto.Exceptions[sym] = e
+	return rb
+}
+
+func (rb *ResourceBuilder) Name(sym string) *ResourceBuilder {
+	rb.proto.Name = Identifier(sym)
 	return rb
 }
 

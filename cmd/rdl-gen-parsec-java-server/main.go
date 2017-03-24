@@ -47,7 +47,6 @@ type javaServerGenerator struct {
 	imports        []string
 	genUsingPath   bool
 	namespace      string
-	basePath       string
 }
 
 func main() {
@@ -58,7 +57,6 @@ func main() {
 	genHandlerImplString := flag.String("i", "true", "Generate interface implementations")
 	genParsecErrorString := flag.String("e", "true", "Generate Parsec Error classes")
 	namespace := flag.String("ns", "", "Namespace")
-	basePath := flag.String("b", "", "Base path")
 	flag.Parse()
 
 	genAnnotations, err:= strconv.ParseBool(*genAnnotationsString)
@@ -80,7 +78,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			GenerateJavaServer(banner, &schema, *pOutdir, genAnnotations, genHandlerImpl, genUsingPath, genParsecError, *namespace, *basePath)
+			GenerateJavaServer(banner, &schema, *pOutdir, genAnnotations, genHandlerImpl, genUsingPath, genParsecError, *namespace)
 			os.Exit(0)
 		}
 	}
@@ -96,7 +94,7 @@ func checkErr(err error) {
 }
 
 // GenerateJavaServer generates the server code for the RDL-defined service
-func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, genHandlerImpl bool, genUsingPath bool, genParsecError bool, namespace string, basePath string) error {
+func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, genHandlerImpl bool, genUsingPath bool, genParsecError bool, namespace string) error {
 	reg := rdl.NewTypeRegistry(schema)
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
@@ -109,16 +107,16 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	if err != nil {
 		return err
 	}
-	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	gen.processTemplate(javaServerHandlerTemplate)
 	out.Flush()
 	file.Close()
 
 	for _, r := range schema.Resources {
 		if r.Async != nil && *r.Async {
-			javaServerMakeAsyncResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace, basePath)
+			javaServerMakeAsyncResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace)
 		} else if len(r.Outputs) > 0 {
-			javaServerMakeResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace, basePath)
+			javaServerMakeResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace)
 		}
 	}
 
@@ -139,7 +137,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 			if err != nil {
 				return err
 			}
-			gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+			gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 			packageName := utils.JavaGenerationPackage(schema, namespace)
 
 			// import user defined struct classes
@@ -163,7 +161,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	if err != nil {
 		return err
 	}
-	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	gen.processTemplate(javaServerContextTemplate)
 	out.Flush()
 	file.Close()
@@ -176,7 +174,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	if err != nil {
 		return err
 	}
-	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	for _, r := range schema.Resources {
 		gen.generateImportClass(r)
 	}
@@ -199,7 +197,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	if err != nil {
 		return err
 	}
-	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	gen.processTemplate(javaServerInitTemplate)
 	out.Flush()
 	file.Close()
@@ -265,7 +263,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	return err
 }
 
-func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string, basePath string) error {
+func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string) error {
 	cName := utils.Capitalize(string(r.Type))
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
@@ -277,7 +275,7 @@ func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.T
 	if err != nil {
 		return err
 	}
-	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	funcMap := template.FuncMap{
 		"header":           func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":          func() string { return utils.JavaGenerationPackage(gen.schema, namespace) },
@@ -301,7 +299,7 @@ func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.T
 	return err
 }
 
-func javaServerMakeResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string, basePath string) error {
+func javaServerMakeResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string) error {
 	rType := string(r.Type)
 	cName := utils.Capitalize(rType)
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
@@ -314,7 +312,7 @@ func javaServerMakeResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRe
 	if err != nil {
 		return err
 	}
-	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	funcMap := template.FuncMap{
 		"header":           func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":          func() string { return utils.JavaGenerationPackage(gen.schema, namespace) },
@@ -822,7 +820,7 @@ func (gen *javaServerGenerator) processTemplate(templateSource string) error {
 		"cName":       func() string { return utils.Capitalize(gen.name) },
 		"methodName":  func(r *rdl.Resource) string { return strings.ToLower(r.Method) + string(r.Type) + "Handler" }, //?
 		"methodPath":  func(r *rdl.Resource) string { return gen.resourcePath(r) },
-		"rootPath":    func() string { return utils.JavaGenerationRootPath(gen.schema, gen.basePath) },
+		"rootPath":    func() string { return utils.JavaGenerationRootPath(gen.schema) },
 		"rName": func(r *rdl.Resource) string {
 			return utils.Capitalize(strings.ToLower(r.Method)) + string(r.Type) + "Result"
 		},
