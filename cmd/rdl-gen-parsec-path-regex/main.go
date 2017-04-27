@@ -18,6 +18,7 @@ type uriInfo struct {
 
 func main() {
 	pOutdir := flag.String("o", ".", "Output directory")
+	flag.String("s", "", "RDL source file")
 	flag.Parse()
 	var err error
 	var data []byte

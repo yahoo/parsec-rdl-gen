@@ -1,6 +1,6 @@
 {
   "namespace": "com.yahoo.ecosystem.mobile_payment.parsec",
-  "name": "Transaction",
+  "name": "Passcode",
   "version": 1,
   "types": [
     {
@@ -120,10 +120,15 @@
     {
       "EnumTypeDef": {
         "type": "Enum",
-        "name": "MpPaymentType",
+        "name": "MpResetType",
+        "comment": "Support reset by old passcode or card number. indicate reset by passcode.",
         "elements": [
           {
-            "symbol": "CREDIT_CARD_TOKEN"
+            "symbol": "BY_PASSCODE",
+            "comment": "indicate reset by card number."
+          },
+          {
+            "symbol": "BY_CARD_NUMBER"
           }
         ]
       }
@@ -131,459 +136,41 @@
     {
       "StructTypeDef": {
         "type": "Struct",
-        "name": "MpPaymentToken",
-        "comment": "Token data.",
+        "name": "MpResetData",
+        "comment": "The reset data for passcode.",
         "fields": [
           {
-            "name": "id",
-            "type": "String",
-            "comment": "Token id."
-          },
-          {
-            "name": "tokenValue",
-            "type": "String",
-            "comment": "Token value."
-          },
-          {
-            "name": "expire",
-            "type": "DateTime",
-            "comment": "Token expire time."
-          },
-          {
-            "name": "expireDuration",
-            "type": "Int64"
-          },
-          {
-            "name": "creditCardId",
-            "type": "String",
-            "comment": "The credit card id in bastet for payment.",
-            "annotations": {
-              "x_not_null": "groups=create",
-              "x_null": "groups=update"
-            }
-          },
-          {
-            "name": "buyerId",
-            "type": "GUID"
-          },
-          {
-            "name": "payType",
-            "type": "MpPaymentType",
-            "annotations": {
-              "x_not_null": "groups=create",
-              "x_null": "groups=update"
-            }
-          },
-          {
-            "name": "ccode",
-            "type": "String",
-            "annotations": {
-              "x_country_code": "groups=create",
-              "x_not_null": "groups=create",
-              "x_null": "groups=update"
-            }
-          },
-          {
-            "name": "property",
-            "type": "String",
-            "annotations": {
-              "x_not_null": "groups=create",
-              "x_null": "groups=update",
-              "x_size": "min=1, max=10, groups=create"
-            }
-          },
-          {
-            "name": "longitude",
-            "type": "String",
-            "annotations": {
-              "x_not_null": "groups=update",
-              "x_pattern": "regexp=\"^-?[0-9]{1,3}(\\\\.[0-9]{1,7})?$\", groups=create|update"
-            }
-          },
-          {
-            "name": "latitude",
-            "type": "String",
-            "annotations": {
-              "x_not_null": "groups=update",
-              "x_pattern": "regexp=\"^-?[0-9]{1,3}(\\\\.[0-9]{1,7})?$\", groups=create|update"
-            }
-          },
-          {
-            "name": "passCode",
-            "type": "String",
-            "comment": "The user's passcode.",
-            "annotations": {
-              "x_not_null": "groups=create",
-              "x_null": "groups=update"
-            }
-          }
-        ]
-      }
-    },
-    {
-      "EnumTypeDef": {
-        "type": "Enum",
-        "name": "MpTransactionType",
-        "elements": [
-          {
-            "symbol": "PAY"
-          },
-          {
-            "symbol": "REFUND"
-          }
-        ]
-      }
-    },
-    {
-      "EnumTypeDef": {
-        "type": "Enum",
-        "name": "MpTransStatus",
-        "elements": [
-          {
-            "symbol": "NOT_PAID"
-          },
-          {
-            "symbol": "PAID_OK"
-          },
-          {
-            "symbol": "PAY_FAILED"
-          },
-          {
-            "symbol": "CANCELLED"
-          },
-          {
-            "symbol": "INVALID"
-          }
-        ]
-      }
-    },
-    {
-      "EnumTypeDef": {
-        "type": "Enum",
-        "name": "MpRefundStatus",
-        "elements": [
-          {
-            "symbol": "INIT"
-          },
-          {
-            "symbol": "DONE"
-          },
-          {
-            "symbol": "CANCELLED"
-          }
-        ]
-      }
-    },
-    {
-      "EnumTypeDef": {
-        "type": "Enum",
-        "name": "MpApplyPointStatus",
-        "elements": [
-          {
-            "symbol": "TO_BE_APPLIED"
-          },
-          {
-            "symbol": "APPLIED"
-          }
-        ]
-      }
-    },
-    {
-      "EnumTypeDef": {
-        "type": "Enum",
-        "name": "MpTransCreditCardSubType",
-        "elements": [
-          {
-            "symbol": "YAHOO_CO_BRANDED"
-          }
-        ]
-      }
-    },
-    {
-      "EnumTypeDef": {
-        "type": "Enum",
-        "name": "MpSortOrder",
-        "comment": "ascending order",
-        "elements": [
-          {
-            "symbol": "ASC",
-            "comment": "descending order"
-          },
-          {
-            "symbol": "DESC"
-          }
-        ]
-      }
-    },
-    {
-      "EnumTypeDef": {
-        "type": "Enum",
-        "name": "MpPartnerId",
-        "elements": [
-          {
-            "symbol": "CTCB"
-          }
-        ]
-      }
-    },
-    {
-      "EnumTypeDef": {
-        "type": "Enum",
-        "name": "MpTransErrorCode",
-        "elements": [
-          {
-            "symbol": "OK"
-          },
-          {
-            "symbol": "CARD_NOT_SUPPORTED"
-          },
-          {
-            "symbol": "CARD_EXPIRED"
-          },
-          {
-            "symbol": "EXCEEDED_CREDIT_LIMIT"
-          },
-          {
-            "symbol": "EXCEEDED_TRANSACTION_LIMIT"
-          },
-          {
-            "symbol": "SYSTEM_UNDER_MAINTENANCE"
-          }
-        ]
-      }
-    },
-    {
-      "StructTypeDef": {
-        "type": "Struct",
-        "name": "MpTransaction",
-        "fields": [
-          {
-            "name": "id",
-            "type": "String",
+            "name": "resetType",
+            "type": "MpResetType",
+            "comment": "indicate reset by \"old passcode\" or \"card number\".",
             "annotations": {
               "x_not_null": ""
             }
           },
           {
-            "name": "transType",
-            "type": "MpTransactionType",
-            "annotations": {
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "payType",
-            "type": "MpPaymentType",
-            "annotations": {
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "buyerId",
-            "type": "GUID",
-            "annotations": {
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "ccode",
+            "name": "cardNumber",
             "type": "String",
+            "comment": "required if ResetType is BY_CARD_NUMBER.",
             "annotations": {
-              "x_country_code": "",
-              "x_not_null": ""
+              "x_pattern": "regexp=\"^[0-9]{15,16}$\""
             }
           },
           {
-            "name": "property",
+            "name": "oldPasscode",
             "type": "String",
+            "comment": "required if ResetType is BY_PASSCODE.",
+            "annotations": {
+              "x_pattern": "regexp=\"^[0-9]{4}$\""
+            }
+          },
+          {
+            "name": "newPasscode",
+            "type": "String",
+            "comment": "The new passcode for reset.",
             "annotations": {
               "x_not_null": "",
-              "x_size": "min=1, max=10"
+              "x_pattern": "regexp=\"^[0-9]{4}$\""
             }
-          },
-          {
-            "name": "amount",
-            "type": "String",
-            "annotations": {
-              "x_digits": "integer=13, fraction=2",
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "currency",
-            "type": "String",
-            "annotations": {
-              "x_currency": "",
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "realAmount",
-            "type": "String",
-            "annotations": {
-              "x_digits": "integer=13, fraction=2",
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "usedPoints",
-            "type": "String",
-            "optional": true
-          },
-          {
-            "name": "summary",
-            "type": "String",
-            "optional": true
-          },
-          {
-            "name": "detail",
-            "type": "String",
-            "optional": true
-          },
-          {
-            "name": "status",
-            "type": "MpTransStatus",
-            "annotations": {
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "partnerOrderId",
-            "type": "String",
-            "optional": true
-          },
-          {
-            "name": "date",
-            "type": "DateTime",
-            "annotations": {
-              "x_date_time": "",
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "cancelDate",
-            "type": "DateTime",
-            "optional": true
-          },
-          {
-            "name": "partnerId",
-            "type": "MpPartnerId",
-            "annotations": {
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "partnerTxSeq",
-            "type": "String"
-          },
-          {
-            "name": "merchantId",
-            "type": "String",
-            "annotations": {
-              "x_not_empty": "",
-              "x_size": "min=1, max=10"
-            }
-          },
-          {
-            "name": "merchantName",
-            "type": "String",
-            "annotations": {
-              "x_not_empty": "",
-              "x_size": "min=1, max=200"
-            }
-          },
-          {
-            "name": "corpId",
-            "type": "String",
-            "annotations": {
-              "x_not_empty": "",
-              "x_size": "min=1, max=20"
-            }
-          },
-          {
-            "name": "corpTxSeq",
-            "type": "String",
-            "annotations": {
-              "x_not_empty": "",
-              "x_size": "min=1, max=60"
-            }
-          },
-          {
-            "name": "corpTxTime",
-            "type": "DateTime",
-            "annotations": {
-              "x_date_time": "",
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "storeId",
-            "type": "String",
-            "optional": true
-          },
-          {
-            "name": "storeName",
-            "type": "String",
-            "optional": true
-          },
-          {
-            "name": "creditCardId",
-            "type": "String",
-            "annotations": {
-              "x_not_null": ""
-            }
-          },
-          {
-            "name": "ccFirstDigits",
-            "type": "String"
-          },
-          {
-            "name": "ccLastDigits",
-            "type": "String"
-          },
-          {
-            "name": "ccSubType",
-            "type": "MpTransCreditCardSubType"
-          },
-          {
-            "name": "ccDisplayName",
-            "type": "String"
-          },
-          {
-            "name": "appliedPoints",
-            "type": "String"
-          },
-          {
-            "name": "refundStatus",
-            "type": "MpRefundStatus"
-          },
-          {
-            "name": "applyPointStatus",
-            "type": "MpApplyPointStatus"
-          },
-          {
-            "name": "paidDate",
-            "type": "DateTime"
-          },
-          {
-            "name": "createTime",
-            "type": "DateTime"
-          },
-          {
-            "name": "modifyTime",
-            "type": "DateTime"
-          },
-          {
-            "name": "longitude",
-            "type": "String"
-          },
-          {
-            "name": "latitude",
-            "type": "String"
-          },
-          {
-            "name": "errorCode",
-            "type": "MpTransErrorCode"
           }
         ]
       }
@@ -591,23 +178,18 @@
     {
       "StructTypeDef": {
         "type": "Struct",
-        "name": "MpTransactionCollection",
+        "name": "MpPasscode",
+        "comment": "passcode",
         "fields": [
           {
-            "name": "transactions",
-            "type": "Array",
-            "comment": "A list of transaction",
-            "items": "MpTransaction"
-          },
-          {
-            "name": "totalResults",
-            "type": "Int32",
-            "comment": "Number of transactions returned"
-          },
-          {
-            "name": "nextOffset",
-            "type": "Int32",
-            "comment": "If there is more result, the nextOffset can pass to next query, return -1 if no offset anymore"
+            "name": "passcode",
+            "type": "String",
+            "comment": "passcode string.",
+            "annotations": {
+              "x_not_null": "",
+              "x_pattern": "regexp=\"^[0-9]{4}$\"",
+              "x_required": ""
+            }
           }
         ]
       }
@@ -615,61 +197,161 @@
   ],
   "resources": [
     {
-      "type": "MpPaymentToken",
+      "type": "MpNullResult",
       "method": "POST",
-      "path": "/paymentTokens",
-      "comment": "Generate token for mobile payment. authenticate by ytcookie \u0026 wssid",
+      "path": "/passcodes",
+      "comment": "The API give user setup 1st passcode",
       "inputs": [
         {
-          "name": "paymentToken",
-          "type": "MpPaymentToken",
-          "comment": "Token request data.",
+          "name": "passcode",
+          "type": "MpPasscode",
+          "comment": "user enter the passcode",
           "annotations": {
-            "x_must_validate": "create"
+            "x_must_validate": "",
+            "x_not_null": "",
+            "x_required": ""
           }
         }
       ],
       "auth": {
         "authenticate": true
       },
-      "expected": "CREATED",
+      "expected": "NO_CONTENT",
       "exceptions": {
         "BAD_REQUEST": {
-          "type": "ParsecResourceError"
+          "type": "ParsecResourceError",
+          "comment": "The user given wrong format of passcode or passcode have already setup."
         },
         "FORBIDDEN": {
           "type": "ParsecResourceError"
         },
         "INTERNAL_SERVER_ERROR": {
-          "type": "ParsecResourceError"
+          "type": "ParsecResourceError",
+          "comment": "The system have error."
         },
         "UNAUTHORIZED": {
-          "type": "ParsecResourceError"
+          "type": "ParsecResourceError",
+          "comment": "The user not login."
         }
       },
-      "name": "postPaymentToken"
+      "name": "postPasscode"
     },
     {
       "type": "MpNullResult",
       "method": "PUT",
-      "path": "/paymentTokens/{tokenId}",
-      "comment": "Update token position. authenticate by ytcookie \u0026 wssid",
+      "path": "/passcodes",
+      "comment": "Reset passcode by given old passcode or authorized card number",
       "inputs": [
         {
-          "name": "tokenId",
-          "type": "String",
-          "comment": "The token id",
-          "pathParam": true
-        },
-        {
-          "name": "paymentToken",
-          "type": "MpPaymentToken",
-          "comment": "Token request data to be updated.",
+          "name": "resetData",
+          "type": "MpResetData",
+          "comment": "Reset data user given.",
           "annotations": {
-            "x_must_validate": "update"
+            "x_must_validate": "",
+            "x_not_null": "",
+            "x_required": ""
           }
         }
       ],
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "NO_CONTENT",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError"
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError"
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError"
+        }
+      },
+      "name": "resetPasscode"
+    },
+    {
+      "type": "MpCheckResult",
+      "method": "POST",
+      "path": "/passcodes/check",
+      "comment": "Given passcode to check match user's passcode or not",
+      "inputs": [
+        {
+          "name": "passcode",
+          "type": "MpPasscode",
+          "comment": "The passcode user given",
+          "annotations": {
+            "x_must_validate": "",
+            "x_not_null": "",
+            "x_required": ""
+          }
+        }
+      ],
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "OK",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError"
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError"
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError"
+        }
+      },
+      "name": "checkPasscode"
+    },
+    {
+      "type": "MpNullResult",
+      "method": "GET",
+      "path": "/passcodes/{id}/bbb/{id2}",
+      "comment": "Given passcode to check match user's passcode or not",
+      "inputs": [
+        {
+          "name": "id",
+          "type": "String",
+          "pathParam": true
+        },
+        {
+          "name": "id2",
+          "type": "String",
+          "pathParam": true
+        }
+      ],
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "OK",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError"
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError"
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError"
+        }
+      },
+      "name": "checkPasscode2"
+    },
+    {
+      "type": "MpNullResult",
+      "method": "GET",
+      "path": "/passcodes",
+      "comment": "Check the user have set passcode or not.",
       "auth": {
         "authenticate": true
       },
@@ -691,145 +373,13 @@
           "type": "ParsecResourceError"
         }
       },
-      "name": "putPaymentToken"
-    },
-    {
-      "type": "MpTransactionCollection",
-      "method": "GET",
-      "path": "/transactions",
-      "comment": "list transactions belong to the user",
-      "inputs": [
-        {
-          "name": "offset",
-          "type": "int32",
-          "comment": "Offset of items of results.",
-          "queryParam": "offset",
-          "default": 0,
-          "optional": true,
-          "annotations": {
-            "x_min": "0"
-          }
-        },
-        {
-          "name": "count",
-          "type": "int32",
-          "comment": "Number of items to return.",
-          "queryParam": "count",
-          "default": 10,
-          "optional": true,
-          "annotations": {
-            "x_max": "100",
-            "x_min": "0"
-          }
-        },
-        {
-          "name": "startTs",
-          "type": "DateTime",
-          "comment": "Resource create time as the start range.",
-          "queryParam": "startTs",
-          "annotations": {
-            "x_date_time": "",
-            "x_not_null": ""
-          }
-        },
-        {
-          "name": "endTs",
-          "type": "DateTime",
-          "comment": "Resource create time as the end range.",
-          "queryParam": "endTs",
-          "annotations": {
-            "x_date_time": "",
-            "x_not_null": ""
-          }
-        },
-        {
-          "name": "sortBy",
-          "type": "String",
-          "comment": "sort by specific field, only support createTime for now",
-          "queryParam": "sortBy",
-          "default": "createTime",
-          "optional": true,
-          "annotations": {
-            "x_pattern": "regexp=\"^createTime$\""
-          }
-        },
-        {
-          "name": "sortOrder",
-          "type": "MpSortOrder",
-          "comment": "Sort based on order of results.",
-          "queryParam": "sortOrder",
-          "default": "ASC",
-          "optional": true
-        },
-        {
-          "name": "detail",
-          "type": "Bool",
-          "comment": "Show summary txns or full detail txns, default is summary",
-          "queryParam": "detail",
-          "default": false,
-          "optional": true
-        }
-      ],
-      "auth": {
-        "authenticate": true
-      },
-      "expected": "OK",
-      "exceptions": {
-        "BAD_REQUEST": {
-          "type": "ParsecResourceError"
-        },
-        "FORBIDDEN": {
-          "type": "ParsecResourceError"
-        },
-        "INTERNAL_SERVER_ERROR": {
-          "type": "ParsecResourceError"
-        },
-        "UNAUTHORIZED": {
-          "type": "ParsecResourceError"
-        }
-      },
-      "name": "getTransactions"
-    },
-    {
-      "type": "MpTransaction",
-      "method": "GET",
-      "path": "/transactions/{transactionId}",
-      "inputs": [
-        {
-          "name": "transactionId",
-          "type": "String",
-          "comment": "The transaction id",
-          "pathParam": true
-        }
-      ],
-      "auth": {
-        "authenticate": true
-      },
-      "expected": "OK",
-      "exceptions": {
-        "BAD_REQUEST": {
-          "type": "ParsecResourceError"
-        },
-        "FORBIDDEN": {
-          "type": "ParsecResourceError"
-        },
-        "INTERNAL_SERVER_ERROR": {
-          "type": "ParsecResourceError"
-        },
-        "NOT_FOUND": {
-          "type": "ParsecResourceError"
-        },
-        "UNAUTHORIZED": {
-          "type": "ParsecResourceError"
-        }
-      },
-      "name": "getTransaction"
+      "name": "getPasscode"
     },
     {
       "type": "MpNullResult",
       "method": "DELETE",
-      "path": "/transactions",
-      "comment": "Delete the transaction of user.",
+      "path": "/passcodes",
+      "comment": "Check the user and its passcode.",
       "auth": {
         "authenticate": true
       },
@@ -848,7 +398,7 @@
           "type": "ParsecResourceError"
         }
       },
-      "name": "deleteTransactions"
+      "name": "deletePasscode"
     }
   ],
   "base": "/mobilePayment"
