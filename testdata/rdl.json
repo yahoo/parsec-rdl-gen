@@ -1,0 +1,405 @@
+{
+  "namespace": "com.yahoo.ecosystem.mobile_payment.parsec",
+  "name": "Passcode",
+  "version": 1,
+  "types": [
+    {
+      "StructTypeDef": {
+        "type": "Struct",
+        "name": "ParsecErrorDetail",
+        "comment": "DO NOT MODIFY This file is for who want to use ParsecResourceError as error layout. But the structure here is only a reminder for user. It will not be parsed by Parsec. Change this file will not affect the implementation of ParsecResourceError. If you want to change the error layout of api end point, you can customize your own error layout class.",
+        "annotations": {
+          "x_included_from": "ParsecResourceError.rdli"
+        },
+        "fields": [
+          {
+            "name": "message",
+            "type": "String"
+          },
+          {
+            "name": "invalidValue",
+            "type": "String"
+          }
+        ]
+      }
+    },
+    {
+      "StructTypeDef": {
+        "type": "Struct",
+        "name": "ParsecErrorBody",
+        "comment": "Parsec error response entity object",
+        "annotations": {
+          "x_included_from": "ParsecResourceError.rdli"
+        },
+        "fields": [
+          {
+            "name": "code",
+            "type": "Int32",
+            "comment": "error code"
+          },
+          {
+            "name": "message",
+            "type": "String",
+            "comment": "error message"
+          },
+          {
+            "name": "detail",
+            "type": "Array",
+            "comment": "error detail",
+            "items": "ParsecErrorDetail"
+          }
+        ]
+      }
+    },
+    {
+      "StructTypeDef": {
+        "type": "Struct",
+        "name": "ParsecResourceError",
+        "comment": "This error model is designed for following EC REST API Convention (yo/ecrest)",
+        "annotations": {
+          "x_included_from": "ParsecResourceError.rdli"
+        },
+        "fields": [
+          {
+            "name": "error",
+            "type": "ParsecErrorBody",
+            "comment": "error object"
+          }
+        ]
+      }
+    },
+    {
+      "StructTypeDef": {
+        "type": "Struct",
+        "name": "MpNullResult",
+        "comment": "The object is just for no content",
+        "annotations": {
+          "x_included_from": "common.rdli"
+        },
+        "fields": []
+      }
+    },
+    {
+      "StructTypeDef": {
+        "type": "Struct",
+        "name": "MpCheckResult",
+        "comment": "The object is for creditCardAuth \u0026 passCode check result",
+        "annotations": {
+          "x_included_from": "common.rdli"
+        },
+        "fields": [
+          {
+            "name": "isValid",
+            "type": "Bool",
+            "comment": "True if credit card number or passcode is valid, false if not."
+          }
+        ]
+      }
+    },
+    {
+      "StringTypeDef": {
+        "type": "String",
+        "name": "DateTime",
+        "comment": "ISO 8601 ref: http://tools.ietf.org/html/rfc3339#section-5.6 e.g.2013-03-06T11:00:00Z",
+        "annotations": {
+          "x_date_time": "",
+          "x_included_from": "common.rdli"
+        }
+      }
+    },
+    {
+      "StringTypeDef": {
+        "type": "String",
+        "name": "GUID",
+        "comment": "Yahoo global uniq id",
+        "annotations": {
+          "x_included_from": "common.rdli"
+        }
+      }
+    },
+    {
+      "EnumTypeDef": {
+        "type": "Enum",
+        "name": "MpResetType",
+        "comment": "Support reset by old passcode or card number. indicate reset by passcode.",
+        "elements": [
+          {
+            "symbol": "BY_PASSCODE",
+            "comment": "indicate reset by card number."
+          },
+          {
+            "symbol": "BY_CARD_NUMBER"
+          }
+        ]
+      }
+    },
+    {
+      "StructTypeDef": {
+        "type": "Struct",
+        "name": "MpResetData",
+        "comment": "The reset data for passcode.",
+        "fields": [
+          {
+            "name": "resetType",
+            "type": "MpResetType",
+            "comment": "indicate reset by \"old passcode\" or \"card number\".",
+            "annotations": {
+              "x_not_null": ""
+            }
+          },
+          {
+            "name": "cardNumber",
+            "type": "String",
+            "comment": "required if ResetType is BY_CARD_NUMBER.",
+            "annotations": {
+              "x_pattern": "regexp=\"^[0-9]{15,16}$\""
+            }
+          },
+          {
+            "name": "oldPasscode",
+            "type": "String",
+            "comment": "required if ResetType is BY_PASSCODE.",
+            "annotations": {
+              "x_pattern": "regexp=\"^[0-9]{4}$\""
+            }
+          },
+          {
+            "name": "newPasscode",
+            "type": "String",
+            "comment": "The new passcode for reset.",
+            "annotations": {
+              "x_not_null": "",
+              "x_pattern": "regexp=\"^[0-9]{4}$\""
+            }
+          }
+        ]
+      }
+    },
+    {
+      "StructTypeDef": {
+        "type": "Struct",
+        "name": "MpPasscode",
+        "comment": "passcode",
+        "fields": [
+          {
+            "name": "passcode",
+            "type": "String",
+            "comment": "passcode string.",
+            "annotations": {
+              "x_not_null": "",
+              "x_pattern": "regexp=\"^[0-9]{4}$\"",
+              "x_required": ""
+            }
+          }
+        ]
+      }
+    }
+  ],
+  "resources": [
+    {
+      "type": "MpNullResult",
+      "method": "POST",
+      "path": "/passcodes",
+      "comment": "The API give user setup 1st passcode",
+      "inputs": [
+        {
+          "name": "passcode",
+          "type": "MpPasscode",
+          "comment": "user enter the passcode",
+          "annotations": {
+            "x_must_validate": "",
+            "x_not_null": "",
+            "x_required": ""
+          }
+        }
+      ],
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "NO_CONTENT",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError",
+          "comment": "The user given wrong format of passcode or passcode have already setup."
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError",
+          "comment": "The system have error."
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError",
+          "comment": "The user not login."
+        }
+      },
+      "name": "postPasscode"
+    },
+    {
+      "type": "MpNullResult",
+      "method": "PUT",
+      "path": "/passcodes",
+      "comment": "Reset passcode by given old passcode or authorized card number",
+      "inputs": [
+        {
+          "name": "resetData",
+          "type": "MpResetData",
+          "comment": "Reset data user given.",
+          "annotations": {
+            "x_must_validate": "",
+            "x_not_null": "",
+            "x_required": ""
+          }
+        }
+      ],
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "NO_CONTENT",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError"
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError"
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError"
+        }
+      },
+      "name": "resetPasscode"
+    },
+    {
+      "type": "MpCheckResult",
+      "method": "POST",
+      "path": "/passcodes/check",
+      "comment": "Given passcode to check match user's passcode or not",
+      "inputs": [
+        {
+          "name": "passcode",
+          "type": "MpPasscode",
+          "comment": "The passcode user given",
+          "annotations": {
+            "x_must_validate": "",
+            "x_not_null": "",
+            "x_required": ""
+          }
+        }
+      ],
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "OK",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError"
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError"
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError"
+        }
+      },
+      "name": "checkPasscode"
+    },
+    {
+      "type": "MpNullResult",
+      "method": "GET",
+      "path": "/passcodes/{id}/bbb/{id2}",
+      "comment": "Given passcode to check match user's passcode or not",
+      "inputs": [
+        {
+          "name": "id",
+          "type": "String",
+          "pathParam": true
+        },
+        {
+          "name": "id2",
+          "type": "String",
+          "pathParam": true
+        }
+      ],
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "OK",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError"
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError"
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError"
+        }
+      },
+      "name": "checkPasscode2"
+    },
+    {
+      "type": "MpNullResult",
+      "method": "GET",
+      "path": "/passcodes",
+      "comment": "Check the user have set passcode or not.",
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "NO_CONTENT",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError"
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError"
+        },
+        "NOT_FOUND": {
+          "type": "ParsecResourceError"
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError"
+        }
+      },
+      "name": "getPasscode"
+    },
+    {
+      "type": "MpNullResult",
+      "method": "DELETE",
+      "path": "/passcodes",
+      "comment": "Check the user and its passcode.",
+      "auth": {
+        "authenticate": true
+      },
+      "expected": "NO_CONTENT",
+      "exceptions": {
+        "BAD_REQUEST": {
+          "type": "ParsecResourceError"
+        },
+        "FORBIDDEN": {
+          "type": "ParsecResourceError"
+        },
+        "INTERNAL_SERVER_ERROR": {
+          "type": "ParsecResourceError"
+        },
+        "UNAUTHORIZED": {
+          "type": "ParsecResourceError"
+        }
+      },
+      "name": "deletePasscode"
+    }
+  ],
+  "base": "/mobilePayment"
+}
