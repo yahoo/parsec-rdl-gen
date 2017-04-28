@@ -8,6 +8,7 @@ import (
 	"os"
 	"flag"
 	"io/ioutil"
+	"net/url"
 )
 
 type uriInfo struct {
@@ -56,19 +57,27 @@ func genPathInfoFile(outDir string, rdlJson []byte) error {
 }
 
 func extractPathInfo(schema *rdl.Schema) []uriInfo {
-	re := regexp.MustCompile("\\{[^}]+}")
 	pathInfos := []uriInfo{}
 	for _, resource := range schema.Resources {
 		pathInfo := uriInfo{}
 		pathInfo.Method = resource.Method
 		pathInfo.Path = resource.Path
-		pathInfo.PathRegex = re.ReplaceAllString(resource.Path, `[^/]+`)
-		if pathInfo.Method == "GET" {
-			pathInfo.PathRegex += `(/?\\?|/?\$)`
-		} else {
-			pathInfo.PathRegex += `/?\$`
-		}
+		pathInfo.PathRegex = genUriRegex(pathInfo.Path, pathInfo.Method)
 		pathInfos = append(pathInfos, pathInfo)
 	}
 	return pathInfos
+}
+
+var re = regexp.MustCompile("\\{[^}]+}")
+
+func genUriRegex(path string, method string) string {
+	u, _ := url.Parse(path)
+	path = u.Path
+	pathRegex := re.ReplaceAllString(path, `[^/]+`)
+	if method == "GET" {
+		pathRegex += `(/?\\?|/?\$)`
+	} else {
+		pathRegex += `/?\$`
+	}
+	return pathRegex
 }
