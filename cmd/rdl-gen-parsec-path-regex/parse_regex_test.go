@@ -36,3 +36,31 @@ func TestParseRegex(test *testing.T) {
 		os.Exit(1)
 	}
 }
+
+func TestPathRegexGenerator(test *testing.T) {
+	type pathInfos struct {
+		method string
+		path string
+	}
+	uriPaths := []pathInfos {
+		{"POST", "/passcodes"},
+		{"GET", "/passcodes"},
+		{"GET", "/passcodes/{id}"},
+		{"GET", "/passcodes/{id}/bbb/{id2}"},
+		{"GET", "/transactions?offset={offset}&count={count}"},
+	}
+	expectedPathRegex := []string {
+		`/passcodes/?\$`,
+		`/passcodes(/?\\?|/?\$)`,
+		`/passcodes/[^/]+(/?\\?|/?\$)`,
+		`/passcodes/[^/]+/bbb/[^/]+(/?\\?|/?\$)`,
+		`/transactions(/?\\?|/?\$)`,
+	}
+	for idx, pathInfo := range uriPaths {
+		if pathRegex := genUriRegex(pathInfo.path, pathInfo.method);pathRegex != expectedPathRegex[idx] {
+			test.Errorf("pathRegex generated not as expected, path: %v, actulPathRegex: %v",
+			pathInfo.path, pathRegex)
+		}
+	}
+}
+
