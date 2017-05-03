@@ -49,7 +49,7 @@ func genPathInfoFile(outDir string, rdlJson []byte) error {
 	if err = os.MkdirAll(outDir, 0755); err != nil {
 		return err
 	}
-	fileName := string(schema.Name) + ".json"
+	fileName := outDir + "/" + string(schema.Name) + ".json"
 	if err = ioutil.WriteFile(fileName, pathInfoJson, 0644); err != nil {
 		return err
 	}
