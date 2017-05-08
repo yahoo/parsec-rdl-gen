@@ -50,11 +50,11 @@ func TestPathRegexGenerator(test *testing.T) {
 		{"GET", "/transactions?offset={offset}&count={count}"},
 	}
 	expectedPathRegex := []string {
-		`/passcodes/?\$`,
-		`/passcodes(/?\\?|/?\$)`,
-		`/passcodes/[^/]+(/?\\?|/?\$)`,
-		`/passcodes/[^/]+/bbb/[^/]+(/?\\?|/?\$)`,
-		`/transactions(/?\\?|/?\$)`,
+		`/passcodes/?$`,
+		`/passcodes(/?\?|/?$)`,
+		`/passcodes/[^/]+(/?\?|/?$)`,
+		`/passcodes/[^/]+/bbb/[^/]+(/?\?|/?$)`,
+		`/transactions(/?\?|/?$)`,
 	}
 	for idx, pathInfo := range uriPaths {
 		if pathRegex := genUriRegex(pathInfo.path, pathInfo.method);pathRegex != expectedPathRegex[idx] {
