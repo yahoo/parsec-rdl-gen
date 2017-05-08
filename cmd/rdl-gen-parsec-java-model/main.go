@@ -593,7 +593,11 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 		for _, f := range fields {
 			if genAnnotations {
 				if len(f.Annotations) == 0 {
-					f.Annotations = utils.GetUserDefinedTypeAnnotations(f.Type, gen.schema.Types)
+					if (string(f.Type) == "Array") {
+						f.Annotations = utils.GetUserDefinedTypeAnnotations(f.Items, gen.schema.Types)
+					} else {
+						f.Annotations = utils.GetUserDefinedTypeAnnotations(f.Type, gen.schema.Types)
+					}
 				}
 				fannotations = append(fannotations, f.Annotations)
 				gen.generateStructFieldAnnotations(f.Annotations)
