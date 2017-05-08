@@ -75,9 +75,9 @@ func genUriRegex(path string, method string) string {
 	path = u.Path
 	pathRegex := re.ReplaceAllString(path, `[^/]+`)
 	if method == "GET" {
-		pathRegex += `(/?\\?|/?\$)`
+		pathRegex += `(/?\?|/?$)`
 	} else {
-		pathRegex += `/?\$`
+		pathRegex += `/?$`
 	}
 	return pathRegex
 }
