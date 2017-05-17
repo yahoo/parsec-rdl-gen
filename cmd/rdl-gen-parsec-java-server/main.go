@@ -498,10 +498,10 @@ public final class {{rName}} {
 
     public boolean isAsync() { return false; }
 
-    public void done(int code, {{cName}} {{name}}{{range headerParamsSig}}, {{.}}{{end}}) {
-        Response resp = Response.status(code).entity({{name}}){{headerAssign}}
+    public void done(int _code, {{cName}} {{name}}{{range headerParamsSig}}, {{.}}{{end}}) {
+        Response _resp = Response.status(_code).entity({{name}}){{headerAssign}}
             .build();
-        throw new WebApplicationException(resp);
+        throw new WebApplicationException(_resp);
     }
 
     public void done(int code) {
@@ -530,27 +530,27 @@ import javax.ws.rs.WebApplicationException;
 import java.util.concurrent.TimeUnit;
 
 public final class {{rName}} implements TimeoutHandler {
-    private AsyncResponse async;
+    private AsyncResponse _async;
     private ResourceContext context;{{pathParamsDecls}}
     private int code; //normal result
     private int timeoutCode;
 
     {{rName}}(ResourceContext context, {{range pathParamsSig}}{{.}}, {{end}}AsyncResponse async) {
         this.context = context;
-        this.async = async;{{pathParamsAssign}}
+        this._async = async;{{pathParamsAssign}}
         this.code = 0;
         this.timeoutCode = 0;
     }
 
-    public boolean isAsync() { return async != null; }
+    public boolean isAsync() { return _async != null; }
 
-    public void done(int code, {{cName}} {{name}}{{range headerParamsSig}}, {{.}}{{end}}) {
-        Response resp = Response.status(code).entity({{name}}){{headerAssign}}
+    public void done(int _code, {{cName}} {{name}}{{range headerParamsSig}}, {{.}}{{end}}) {
+        Response _resp = Response.status(_code).entity({{name}}){{headerAssign}}
             .build();
-        if (async == null) {
-            throw new WebApplicationException(resp);
+        if (_async == null) {
+            throw new WebApplicationException(_resp);
         }
-        async.resume(resp);
+        _async.resume(_resp);
     }
 
     public void done(int code) {
@@ -561,34 +561,34 @@ public final class {{rName}} implements TimeoutHandler {
         this.code = code;
         //to do: check if the exception is declared, and that the entity is of the declared type
         WebApplicationException err = new WebApplicationException(Response.status(code).entity(entity).build());
-        if (async == null) {
+        if (_async == null) {
             throw err; //not optimal
         }
-        async.resume(err);
+        _async.resume(err);
     }
 
-    private static Map<String,Map<AsyncResponse,{{rName}}>> waiters = new HashMap<String,Map<AsyncResponse,{{rName}}>>();
+    private static Map<String,Map<AsyncResponse,{{rName}}>> _waiters = new HashMap<String,Map<AsyncResponse,{{rName}}>>();
 
-    public void wait({{range pathParamsSig}}{{.}}, {{end}}int timeout, int normalStatus, int timeoutStatus) {
-        async.setTimeout(timeout, TimeUnit.SECONDS);
-        this.code = normalStatus;
-        this.timeoutCode = timeoutStatus;
-        synchronized (waiters) {
-            Map<AsyncResponse,{{rName}}> m = waiters.get({{pathParamsKey}});
+    public void wait({{range pathParamsSig}}{{.}}, {{end}}int _timeout, int _normalStatus, int _timeoutStatus) {
+        _async.setTimeout(_timeout, TimeUnit.SECONDS);
+        this.code = _normalStatus;
+        this.timeoutCode = _timeoutStatus;
+        synchronized (_waiters) {
+            Map<AsyncResponse,{{rName}}> m = _waiters.get({{pathParamsKey}});
             if (m == null) {
                 m = new HashMap<AsyncResponse,{{rName}}>();
-                waiters.put({{pathParamsKey}}, m);
+                _waiters.put({{pathParamsKey}}, m);
             }
-            m.put(async, this);
-            async.setTimeoutHandler(this);
+            m.put(_async, this);
+            _async.setTimeoutHandler(this);
         }
     }
 
     public void handleTimeout(AsyncResponse ar) {
         //the timeout is per-request.
         {{rName}} result = null;
-        synchronized (waiters) {
-            Map<AsyncResponse,{{rName}}> m = waiters.get({{pathParamsKey}});
+        synchronized (_waiters) {
+            Map<AsyncResponse,{{rName}}> m = _waiters.get({{pathParamsKey}});
             if (m != null) {
                 result = m.remove(ar);
             }
@@ -600,16 +600,16 @@ public final class {{rName}} implements TimeoutHandler {
 
     //this get called to notifyAll of changed state
     public static void notify({{range pathParamsSig}}{{.}}, {{end}}{{resultSig}}) {
-        Collection<{{rName}}> results = null;
-        synchronized (waiters) {
-            Map<AsyncResponse,{{rName}}> m = waiters.remove({{pathParamsKey}});
+        Collection<{{rName}}> _results = null;
+        synchronized (_waiters) {
+            Map<AsyncResponse,{{rName}}> m = _waiters.remove({{pathParamsKey}});
             if (m != null) {
-                results = m.values();
+                _results = m.values();
             }
         }
-        if (results != null) {
-            for ({{rName}} result : results) {
-                result.done(result.code, {{resultArgs}});
+        if (_results != null) {
+            for ({{rName}} _result : _results) {
+                _result.done(_result.code, {{resultArgs}});
             }
         }
     }
@@ -850,16 +850,16 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 	}
 	s := ""
 	if resultWrapper {
-		s += "        ResourceContext context = _delegate.newResourceContext(_request, _response);\n"
+		s += "        ResourceContext _context = _delegate.newResourceContext(_request, _response);\n"
 	} else {
 		s += "        try {\n"
-		s += "            ResourceContext context = _delegate.newResourceContext(_request, _response);\n"
+		s += "            ResourceContext _context = _delegate.newResourceContext(_request, _response);\n"
 	}
 	var fargs []string
 	bodyName := ""
 	if r.Auth != nil {
 		if r.Auth.Authenticate {
-			s += "            context.authenticate();\n"
+			s += "            _context.authenticate();\n"
 		} else if r.Auth.Action != "" && r.Auth.Resource != "" {
 			resource := r.Auth.Resource
 			i := strings.Index(resource, "{")
@@ -873,7 +873,7 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 				i = strings.Index(resource, "{")
 			}
 			resource = "\"" + resource + "\""
-			s += fmt.Sprintf("            context.authorize(%q, %s, null);\n", r.Auth.Action, resource)
+			s += fmt.Sprintf("            _context.authorize(%q, %s, null);\n", r.Auth.Action, resource)
 			//what about the domain variant?
 		} else {
 			log.Println("*** Badly formed auth spec in resource input:", r)
@@ -902,20 +902,20 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 	}
 	if resultWrapper {
 		rName := utils.Capitalize(methName) + "Result"
-		s += "        " + rName + " result = new " + rName + "(context"
+		s += "        " + rName + " result = new " + rName + "(_context"
 		if async {
 			s += ", " + strings.Join(append(gen.makePathParamsArgs(r), "asyncResp"), ", ")
 		}
 		s += ");\n"
 		sargs += ", result"
-		s += "        _delegate." + methName + "(context" + sargs + ");\n"
+		s += "        _delegate." + methName + "(_context" + sargs + ");\n"
 	} else {
 		noContent := (r.Expected == "NO_CONTENT" && r.Alternatives == nil) || returnType == "Null"
 		s += "            "
 		if !noContent {
 			s += returnType + " e = "
 		}
-		s += "_delegate." + methName + "(context" + sargs + ");\n"
+		s += "_delegate." + methName + "(_context" + sargs + ");\n"
 		if len(r.Outputs) > 0 {
 			for _, o := range r.Outputs {
 				s += fmt.Sprintf("            _response.addHeader(%q, e.%s);\n", o.Header, o.Name)
@@ -930,24 +930,24 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 			s += "            return Response.status(ResourceException." + r.Expected + ").entity(e).build();\n"
 		}
 		s += "        } catch (ResourceException e) {\n"
-		s += "            int code = e.getCode();\n"
-		s += "            switch (code) {\n"
+		s += "            int _code = e.getCode();\n"
+		s += "            switch (_code) {\n"
 		if len(r.Alternatives) > 0 {
 			for _, alt := range r.Alternatives {
 				s += "            case ResourceException." + alt + ":\n"
 			}
-			s += "                throw typedException(code, e, " + returnType + ".class);\n"
+			s += "                throw typedException(_code, e, " + returnType + ".class);\n"
 		}
 		if r.Exceptions != nil && len(r.Exceptions) > 0 {
 			for ecode, edef := range r.Exceptions {
 				etype := edef.Type
 				s += "            case ResourceException." + ecode + ":\n"
-				s += "                throw typedException(code, e, " + etype + ".class);\n"
+				s += "                throw typedException(_code, e, " + etype + ".class);\n"
 			}
 		}
 		s += "            default:\n"
-		s += "                System.err.println(\"*** Warning: undeclared exception (\"+code+\") for resource " + methName + "\");\n"
-		s += "                throw typedException(code, e, ResourceError.class);\n" //? really
+		s += "                System.err.println(\"*** Warning: undeclared exception (\"+_code+\") for resource " + methName + "\");\n"
+		s += "                throw typedException(_code, e, ResourceError.class);\n" //? really
 		s += "            }\n"
 		s += "        }\n"
 	}
