@@ -1025,14 +1025,14 @@ func (gen *javaServerGenerator) handlerSignature(r *rdl.Resource) string {
 	if len(r.Produces) > 0 {
 		spec += "@Produces({\"" + strings.Join(r.Produces, ", ") + "\"})\n"
 	} else {
-		spec += "@Produces(MediaType.APPLICATION_JSON)\n"
+		spec += "@Produces(\"application/json;charset=utf-8\")\n"
 	}
 	switch r.Method {
 	case "POST", "PUT":
 		if len(r.Consumes) > 0 {
 			spec += "    @Consumes({\"" + strings.Join(r.Consumes, ", ") + "\"})\n"
 		} else {
-			spec += "    @Consumes(MediaType.APPLICATION_JSON)\n"
+			spec += "    @Consumes(\"application/json;charset=utf-8\")\n"
 		}
 	}
 	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath)
