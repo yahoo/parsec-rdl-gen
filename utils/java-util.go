@@ -216,6 +216,7 @@ public class ResourceException extends RuntimeException {
     public final static int REQUEST_ENTITY_TOO_LARGE = 413;
     public final static int UNSUPPORTED_MEDIA_TYPE = 415;
     public final static int MISDIRECTED_REQUEST = 421;
+    public final static int UNPROCESSABLE_ENTITY = 422;
     public final static int PRECONDITION_REQUIRED = 428;
     public final static int TOO_MANY_REQUESTS = 429;
 
@@ -245,7 +246,8 @@ public class ResourceException extends RuntimeException {
         case UNSUPPORTED_MEDIA_TYPE: return "Unsupported Media Type";
         case INTERNAL_SERVER_ERROR: return "Internal Server Error";
         case NOT_IMPLEMENTED: return "Not Implemented";
-        case MISDIRECTED_REQUEST : return "Misdirected Request";
+        case MISDIRECTED_REQUEST: return "Misdirected Request";
+        case UNPROCESSABLE_ENTITY: return "Unprocessable Entity";
         case PRECONDITION_REQUIRED: return "Precondition Required";
         case TOO_MANY_REQUESTS: return "Too Many Requests";
         case REQUEST_ENTITY_TOO_LARGE: return "Request Entity Too Large";
