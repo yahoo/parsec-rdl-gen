@@ -462,7 +462,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 type SwaggerDoc struct {
 	Swagger string       `json:"swagger"`
 	Info    *SwaggerInfo `json:"info"`
-	Host        string                               `json:"host"`
+	Host        string                               `json:"host,omitempty" rdl:"optional"`
 	BasePath    string                               `json:"basePath"`
 	Schemes     []string                             `json:"schemes"`
 	Paths       map[string]map[string]*SwaggerAction `json:"paths,omitempty"`
