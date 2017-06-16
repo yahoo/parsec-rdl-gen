@@ -30,6 +30,7 @@ func main() {
 	genParsecErrorString := flag.String("e", "true", "Generate Parsec Error classes")
 	scheme := flag.String("c", "", "Scheme")
 	finalName := flag.String("f", "", "FinalName of jar package, will be a part of path in basePath")
+	apiHost := flag.String("t", "", "The host serving the API")
 	flag.Parse()
 
 	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
@@ -40,7 +41,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			ExportToSwagger(&schema, *pOutdir, genParsecError, *scheme, *finalName)
+			ExportToSwagger(&schema, *pOutdir, genParsecError, *scheme, *finalName, *apiHost)
 			os.Exit(0)
 		}
 	}
@@ -57,8 +58,9 @@ func checkErr(err error) {
 
 // ExportToSwagger exports the RDL schema to Swagger 2.0 format,
 //   and serves it up on the specified server endpoint is provided, or outputs to stdout otherwise.
-func ExportToSwagger(schema *rdl.Schema, outdir string, genParsecError bool, swaggerScheme string, finalName string) error {
-	swaggerData, err := swagger(schema, genParsecError, swaggerScheme, finalName)
+func ExportToSwagger(schema *rdl.Schema, outdir string, genParsecError bool, swaggerScheme string, finalName string,
+	apiHost string) error {
+	swaggerData, err := swagger(schema, genParsecError, swaggerScheme, finalName, apiHost)
 	if err != nil {
 		return err
 	}
@@ -105,7 +107,7 @@ func ExportToSwagger(schema *rdl.Schema, outdir string, genParsecError bool, swa
 	return http.ListenAndServe(outdir, nil)
 }
 
-func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, finalName string) (*SwaggerDoc, error) {
+func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, finalName string, apiHost string) (*SwaggerDoc, error) {
 	reg := rdl.NewTypeRegistry(schema)
 	swag := new(SwaggerDoc)
 	swag.Swagger = "2.0"
@@ -123,6 +125,10 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 		} else {
 			swag.BasePath = finalName
 		}
+	}
+
+	if apiHost != "" {
+		swag.Host = apiHost
 	}
 
 	swag.BasePath += utils.JavaGenerationRootPath(schema)
@@ -456,7 +462,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 type SwaggerDoc struct {
 	Swagger string       `json:"swagger"`
 	Info    *SwaggerInfo `json:"info"`
-	//Host        string                               `json:"host"`
+	Host        string                               `json:"host"`
 	BasePath    string                               `json:"basePath"`
 	Schemes     []string                             `json:"schemes"`
 	Paths       map[string]map[string]*SwaggerAction `json:"paths,omitempty"`
