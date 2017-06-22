@@ -3,10 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
-			"checksumSHA1": "osDEFQ03ubwb5nmSVHmsaAyvqTE=",
+			"checksumSHA1": "KFoMH36cWb91p+FLc2VoOsiSPoE=",
 			"path": "github.com/ardielle/ardielle-go/rdl",
-			"revision": "c77ccbc2d0007ae2c6ba90eaa0006f68e6203aaf",
-			"revisionTime": "2017-03-24T00:51:20Z"
+			"revision": "1d359529d1f92b8c1dfe56c39548a5f96851cc29",
+			"revisionTime": "2017-06-22T03:00:00Z"
 		},
 		{
 			"checksumSHA1": "zIH+zKdgjPm3KRioJm/D6fQmZVk=",
