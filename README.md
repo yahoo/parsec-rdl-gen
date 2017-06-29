@@ -39,6 +39,8 @@ cd /Users/guang001/Documents/workspace/go/src/github.com/yahoo/parsec-rdl-gen/
 git remote set-url origin git@git.corp.yahoo.com:guang001/apex.git
 ```
 
+Note: The 'go get' command would not refetch(checkout) the code if target directory already exist.
+
 ## License
 
 Copyright 2016 Yahoo Inc.
