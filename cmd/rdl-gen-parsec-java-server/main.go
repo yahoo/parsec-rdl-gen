@@ -9,15 +9,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/ardielle/ardielle-go/rdl"
-	"github.com/yahoo/parsec-rdl-gen/utils"
 	"io/ioutil"
 	"log"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"text/template"
-	"strconv"
+
+	"github.com/ardielle/ardielle-go/rdl"
+	"github.com/yahoo/parsec-rdl-gen/utils"
 )
 
 const (
@@ -59,13 +60,13 @@ func main() {
 	namespace := flag.String("ns", "", "Namespace")
 	flag.Parse()
 
-	genAnnotations, err:= strconv.ParseBool(*genAnnotationsString)
+	genAnnotations, err := strconv.ParseBool(*genAnnotationsString)
 	checkErr(err)
-	genUsingPath, err:= strconv.ParseBool(*genUsingPathString)
+	genUsingPath, err := strconv.ParseBool(*genUsingPathString)
 	checkErr(err)
-	genHandlerImpl, err:= strconv.ParseBool(*genHandlerImplString)
+	genHandlerImpl, err := strconv.ParseBool(*genHandlerImplString)
 	checkErr(err)
-	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
+	genParsecError, err := strconv.ParseBool(*genParsecErrorString)
 	checkErr(err)
 
 	data, err := ioutil.ReadAll(os.Stdin)
@@ -641,7 +642,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 public class {{cName}}Server {
