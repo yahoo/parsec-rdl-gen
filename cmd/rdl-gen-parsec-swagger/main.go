@@ -376,7 +376,18 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						case "Int32", "Int64", "Int16":
 							items.Type = "integer"
 							items.Format = strings.ToLower(fItems)
-							items.Example = f.Annotations[ExampleAnnotationKey]
+							if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+								items.Example = example
+							} else {
+								items.Example = 0
+							}
+						case "Bool":
+							items.Type = "bool"
+							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+								items.Example = example
+							} else {
+								items.Example = false
+							}
 						default:
 							items.Ref = "#/definitions/" + fItems
 						}
@@ -388,8 +399,19 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 				case rdl.BaseTypeInt32, rdl.BaseTypeInt64, rdl.BaseTypeInt16:
 					prop.Type = "integer"
 					prop.Format = strings.ToLower(fbt.String())
-					prop.Example = f.Annotations[ExampleAnnotationKey]
-				case rdl.BaseTypeStruct:
+					if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+						prop.Example = example
+					} else {
+						prop.Example = 0
+					}
+				case rdl.BaseTypeBool:
+					prop.Type = "bool"
+					if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+						prop.Example = example
+					} else {
+						prop.Example = false
+					}
+				case rdl.BaseTypeEnum, rdl.BaseTypeStruct:
 					prop.Ref = "#/definitions/" + string(f.Type)
 				case rdl.BaseTypeMap:
 					prop.Type = "object"
@@ -403,7 +425,18 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						case "Int32", "Int64", "Int16":
 							items.Type = "integer"
 							items.Format = strings.ToLower(fItems)
-							items.Example = f.Annotations[ExampleAnnotationKey]
+							if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+								items.Example = example
+							} else {
+								items.Example = 0
+							}
+						case "Bool":
+							items.Type = "bool"
+							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+								items.Example = example
+							} else {
+								items.Example = false
+							}
 						default:
 							items.Ref = "#/definitions/" + fItems
 						}
@@ -444,6 +477,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 			tmp = append(tmp, string(el.Symbol))
 		}
 		st.Enum = tmp
+		st.Type = "string"
 	case rdl.TypeVariantUnionTypeDef:
 		typedef := t.UnionTypeDef
 		fmt.Println("[" + typedef.Name + ": Swagger doesn't support unions]")
