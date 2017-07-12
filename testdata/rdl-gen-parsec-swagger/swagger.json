@@ -1,0 +1,216 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "The swagger API",
+        "version": "1"
+    },
+    "basePath": "/swagger/v1",
+    "schemes": [],
+    "paths": {
+        "/get/{id}": {
+            "get": {
+                "tags": [
+                    "Response"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "type": "string",
+                        "required": false
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "Order": {
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "example": ""
+                }
+            },
+            "required": [
+                "name"
+            ]
+        },
+        "ParsecErrorBody": {
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "detail": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ParsecErrorDetail"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "message"
+            ]
+        },
+        "ParsecErrorDetail": {
+            "properties": {
+                "invalidValue": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "message"
+            ]
+        },
+        "ParsecResourceError": {
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/ParsecErrorBody"
+                }
+            },
+            "required": [
+                "error"
+            ]
+        },
+        "Property": {
+            "type": "string",
+            "enum": [
+                "AUCTION",
+                "MALL",
+                "SHOPPING",
+                "NEVEC"
+            ]
+        },
+        "ResourceError": {
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "code",
+                "message"
+            ]
+        },
+        "Response": {
+            "properties": {
+                "num": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 0
+                },
+                "nums": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    }
+                },
+                "order": {
+                    "$ref": "#/definitions/Order"
+                },
+                "orders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Order"
+                    }
+                },
+                "properties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Property"
+                    }
+                },
+                "property": {
+                    "$ref": "#/definitions/Property"
+                },
+                "recommendFuture": {
+                    "type": "bool",
+                    "example": false
+                },
+                "recommendFutures": {
+                    "type": "array",
+                    "items": {
+                        "type": "bool",
+                        "example": false
+                    }
+                },
+                "userId": {
+                    "type": "string",
+                    "example": ""
+                },
+                "userIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "example": ""
+                    }
+                }
+            },
+            "required": [
+                "property",
+                "properties",
+                "userId",
+                "userIds",
+                "order",
+                "orders",
+                "recommendFuture",
+                "recommendFutures",
+                "num",
+                "nums"
+            ]
+        }
+    }
+}
