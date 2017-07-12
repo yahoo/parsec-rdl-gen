@@ -1,0 +1,140 @@
+{
+    "namespace": "com.example",
+    "name": "swagger",
+    "version": 1,
+    "types": [
+        {
+            "EnumTypeDef": {
+                "type": "Enum",
+                "name": "Property",
+                "elements": [
+                    {
+                        "symbol": "AUCTION",
+                        "comment": "TW Auctions"
+                    },
+                    {
+                        "symbol": "MALL",
+                        "comment": "TW MarketPlace"
+                    },
+                    {
+                        "symbol": "SHOPPING",
+                        "comment": "TW Shopping"
+                    },
+                    {
+                        "symbol": "NEVEC",
+                        "comment": "TW NEVEC"
+                    }
+                ]
+            }
+        },
+        {
+            "StructTypeDef": {
+                "type": "Struct",
+                "name": "Order",
+                "annotations": {
+                    "x_object": ""
+                },
+                "fields": [
+                    {
+                        "name": "name",
+                        "type": "String"
+                    }
+                ]
+            }
+        },
+        {
+            "StructTypeDef": {
+                "type": "Struct",
+                "name": "Response",
+                "fields": [
+                    {
+                        "name": "property",
+                        "type": "Property",
+                        "annotations": {
+                            "x_not_null": ""
+                        }
+                    },
+                    {
+                        "name": "properties",
+                        "type": "Array",
+                        "items": "Property"
+                    },
+                    {
+                        "name": "userId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "userIds",
+                        "type": "Array",
+                        "items": "String"
+                    },
+                    {
+                        "name": "order",
+                        "type": "Order",
+                        "annotations": {
+                            "x_must_validate": "",
+                            "x_not_null": ""
+                        }
+                    },
+                    {
+                        "name": "orders",
+                        "type": "Array",
+                        "items": "Order"
+                    },
+                    {
+                        "name": "recommendFuture",
+                        "type": "Bool"
+                    },
+                    {
+                        "name": "recommendFutures",
+                        "type": "Array",
+                        "items": "Bool"
+                    },
+                    {
+                        "name": "num",
+                        "type": "Int32"
+                    },
+                    {
+                        "name": "nums",
+                        "type": "Array",
+                        "items": "Int32"
+                    }
+                ]
+            }
+        }
+    ],
+    "resources": [
+        {
+            "type": "Response",
+            "method": "GET",
+            "path": "/get/{id}",
+            "inputs": [
+                {
+                    "name": "id",
+                    "type": "String",
+                    "pathParam": true,
+                    "optional": true
+                }
+            ],
+            "expected": "OK",
+            "exceptions": {
+                "BAD_REQUEST": {
+                    "type": "ResourceError"
+                },
+                "FORBIDDEN": {
+                    "type": "ResourceError"
+                },
+                "INTERNAL_SERVER_ERROR": {
+                    "type": "ResourceError"
+                },
+                "NOT_FOUND": {
+                    "type": "ResourceError"
+                },
+                "UNAUTHORIZED": {
+                    "type": "ResourceError"
+                }
+            },
+            "name": "getId"
+        }
+    ]
+}
