@@ -36,15 +36,15 @@ func JavaGenerationOrigPackage(schema *rdl.Schema, namespace string) string {
 	return string(schema.Namespace)
 }
 
-func JavaGenerationRootPath(schema *rdl.Schema, basePath string) string {
-	if basePath != "" {
+func JavaGenerationRootPath(schema *rdl.Schema) string {
+	if schema.Base != "" {
 		if schema.Version != nil {
-			if basePath != "/" {
-				return fmt.Sprintf("%s/v%d", basePath, *schema.Version)
+			if schema.Base != "/" {
+				return fmt.Sprintf("%s/v%d", schema.Base, *schema.Version)
 			}
 			return fmt.Sprintf("/v%d", *schema.Version)
 		}
-		return basePath
+		return schema.Base
 	} else if schema.Name != "" {
 		if schema.Version != nil {
 			return fmt.Sprintf("/%s/v%d", string(schema.Name), *schema.Version)
@@ -217,6 +217,7 @@ public class ResourceException extends RuntimeException {
     public final static int REQUEST_ENTITY_TOO_LARGE = 413;
     public final static int UNSUPPORTED_MEDIA_TYPE = 415;
     public final static int MISDIRECTED_REQUEST = 421;
+    public final static int UNPROCESSABLE_ENTITY = 422;
     public final static int PRECONDITION_REQUIRED = 428;
     public final static int TOO_MANY_REQUESTS = 429;
 
@@ -246,7 +247,8 @@ public class ResourceException extends RuntimeException {
         case UNSUPPORTED_MEDIA_TYPE: return "Unsupported Media Type";
         case INTERNAL_SERVER_ERROR: return "Internal Server Error";
         case NOT_IMPLEMENTED: return "Not Implemented";
-        case MISDIRECTED_REQUEST : return "Misdirected Request";
+        case MISDIRECTED_REQUEST: return "Misdirected Request";
+        case UNPROCESSABLE_ENTITY: return "Unprocessable Entity";
         case PRECONDITION_REQUIRED: return "Precondition Required";
         case TOO_MANY_REQUESTS: return "Too Many Requests";
         case REQUEST_ENTITY_TOO_LARGE: return "Request Entity Too Large";
@@ -375,7 +377,7 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				i = items
 			}
 		}
-		gitems := JavaType(reg, i, false, "", "")
+		gitems := JavaType(reg, i, true, "", "")
 		//return gitems + "[]" //if arrays, not lists
 		return "List<" + gitems + ">"
 	case rdl.BaseTypeMap:
@@ -393,8 +395,8 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				i = items
 			}
 		}
-		gkeys := JavaType(reg, k, false, "", "")
-		gitems := JavaType(reg, i, false, "", "")
+		gkeys := JavaType(reg, k, true, "", "")
+		gitems := JavaType(reg, i, true, "", "")
 		return "Map<" + gkeys + "," + gitems + ">"
 	case rdl.BaseTypeStruct:
 		switch t.Variant {

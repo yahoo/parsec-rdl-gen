@@ -6,6 +6,7 @@ package rdl
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 var _ = json.Marshal
@@ -35,6 +36,11 @@ func (sb *SchemaBuilder) Version(version int32) *SchemaBuilder {
 	return sb
 }
 
+func (sb *SchemaBuilder) Base(base string) *SchemaBuilder {
+	sb.proto.Base = base
+	return sb
+}
+
 func (sb *SchemaBuilder) Comment(comment string) *SchemaBuilder {
 	sb.proto.Comment = comment
 	return sb
@@ -51,7 +57,84 @@ func (sb *SchemaBuilder) AddResource(r *Resource) *SchemaBuilder {
 }
 
 func (sb *SchemaBuilder) Build() *Schema {
+	var ordered []*Type
+	all := make(map[string]*Type)
+	resolved := make(map[string]bool)
+	for _, bt := range namesBaseType {
+		resolved[strings.ToLower(bt)] = true
+	}
+	for _, t := range sb.proto.Types {
+		name, _, _ := TypeInfo(t)
+		all[strings.ToLower(string(name))] = t
+	}
+	for _, t := range sb.proto.Types {
+		name, super, _ := TypeInfo(t)
+		ordered = sb.resolve(ordered, resolved, all, strings.ToLower(string(name)), strings.ToLower(string(super)))
+	}
+	sb.proto.Types = ordered
 	return sb.proto
+}
+
+func (sb *SchemaBuilder) isBaseType(name string) bool {
+	switch strings.ToLower(name) {
+	case "bool", "int8", "int16", "int32", "int64", "float32", "float64":
+		return true
+	case "string", "bytes", "timestamp", "symbol", "uuid":
+		return true
+	case "struct", "array", "map", "enum", "union", "any":
+		return true
+	default:
+		return false
+	}
+}
+
+func (sb *SchemaBuilder) resolve(ordered []*Type, resolved map[string]bool, all map[string]*Type, name, super string) []*Type {
+	if _, ok := resolved[name]; ok || sb.isBaseType(name) {
+		return ordered
+	}
+	t := all[name]
+	switch strings.ToLower(super) {
+	case "string", "bytes", "bool", "int8", "int16", "int32", "int64", "float32", "float64", "uuid", "timestamp":
+		//no dependencies
+	case "array":
+		if t.ArrayTypeDef != nil {
+			ordered = sb.resolveRef(ordered, resolved, all, strings.ToLower(string(t.ArrayTypeDef.Items)))
+		}
+	case "map":
+		if t.MapTypeDef != nil {
+			ordered = sb.resolveRef(ordered, resolved, all, strings.ToLower(string(t.MapTypeDef.Items)))
+			ordered = sb.resolveRef(ordered, resolved, all, strings.ToLower(string(t.MapTypeDef.Keys)))
+		}
+	case "struct":
+		if t.StructTypeDef != nil {
+			for _, f := range t.StructTypeDef.Fields {
+				ordered = sb.resolveRef(ordered, resolved, all, strings.ToLower(string(f.Type)))
+			}
+		}
+	default:
+		ordered = sb.resolveRef(ordered, resolved, all, strings.ToLower(string(super)))
+	}
+	resolved[name] = true
+	return append(ordered, t)
+}
+
+func (sb *SchemaBuilder) resolveRef(ordered []*Type, resolved map[string]bool, all map[string]*Type, ref string) []*Type {
+	if !sb.isBaseType(ref) {
+		t := all[ref]
+		_, super, _ := TypeInfo(t)
+		ordered = sb.resolve(ordered, resolved, all, ref, strings.ToLower(string(super)))
+	}
+	return ordered
+}
+
+func (sb *SchemaBuilder) find(ordered []*Type, name string) *Type {
+	for _, t := range ordered {
+		n, _, _ := TypeInfo(t)
+		if strings.ToLower(name) == strings.ToLower(string(n)) {
+			return t
+		}
+	}
+	return nil
 }
 
 type StringTypeBuilder struct {
@@ -380,6 +463,11 @@ func (rb *ResourceBuilder) Exception(sym string, typename string, comment string
 		rb.proto.Exceptions = make(map[string]*ExceptionDef)
 	}
 	rb.proto.Exceptions[sym] = e
+	return rb
+}
+
+func (rb *ResourceBuilder) Name(sym string) *ResourceBuilder {
+	rb.proto.Name = Identifier(sym)
 	return rb
 }
 

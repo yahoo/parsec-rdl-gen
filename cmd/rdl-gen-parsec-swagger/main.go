@@ -29,7 +29,8 @@ func main() {
 	flag.String("s", "", "RDL source file")
 	genParsecErrorString := flag.String("e", "true", "Generate Parsec Error classes")
 	scheme := flag.String("c", "", "Scheme")
-	basePath := flag.String("b", "/api", "Base path")
+	finalName := flag.String("f", "", "FinalName of jar package, will be a part of path in basePath")
+	apiHost := flag.String("t", "", "The host serving the API")
 	flag.Parse()
 
 	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
@@ -40,7 +41,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			ExportToSwagger(&schema, *pOutdir, *basePath, genParsecError, *scheme)
+			ExportToSwagger(&schema, *pOutdir, genParsecError, *scheme, *finalName, *apiHost)
 			os.Exit(0)
 		}
 	}
@@ -57,8 +58,9 @@ func checkErr(err error) {
 
 // ExportToSwagger exports the RDL schema to Swagger 2.0 format,
 //   and serves it up on the specified server endpoint is provided, or outputs to stdout otherwise.
-func ExportToSwagger(schema *rdl.Schema, outdir string, basePath string, genParsecError bool, swaggerScheme string) error {
-	swaggerData, err := swagger(schema, basePath, genParsecError, swaggerScheme)
+func ExportToSwagger(schema *rdl.Schema, outdir string, genParsecError bool, swaggerScheme string, finalName string,
+	apiHost string) error {
+	swaggerData, err := swagger(schema, genParsecError, swaggerScheme, finalName, apiHost)
 	if err != nil {
 		return err
 	}
@@ -105,7 +107,7 @@ func ExportToSwagger(schema *rdl.Schema, outdir string, basePath string, genPars
 	return http.ListenAndServe(outdir, nil)
 }
 
-func swagger(schema *rdl.Schema, basePath string, genParsecError bool, swaggerScheme string) (*SwaggerDoc, error) {
+func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, finalName string, apiHost string) (*SwaggerDoc, error) {
 	reg := rdl.NewTypeRegistry(schema)
 	swag := new(SwaggerDoc)
 	swag.Swagger = "2.0"
@@ -117,15 +119,19 @@ func swagger(schema *rdl.Schema, basePath string, genParsecError bool, swaggerSc
 		swag.Schemes = append(swag.Schemes, swaggerScheme)
 	}
 
-	if basePath != "" {
-		if string([]rune(basePath)[0]) != "/" {
-			// to compatible with previous version
-			swag.BasePath = "/" + basePath
+	if finalName != "" {
+		if string([]rune(finalName)[0]) != "/" {
+			swag.BasePath = "/" + finalName
 		} else {
-			swag.BasePath = basePath
+			swag.BasePath = finalName
 		}
 	}
-	swag.BasePath += utils.JavaGenerationRootPath(schema, "")
+
+	if apiHost != "" {
+		swag.Host = apiHost
+	}
+
+	swag.BasePath += utils.JavaGenerationRootPath(schema)
 
 	title := "API"
 	if schema.Name != "" {
@@ -370,7 +376,18 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						case "Int32", "Int64", "Int16":
 							items.Type = "integer"
 							items.Format = strings.ToLower(fItems)
-							items.Example = f.Annotations[ExampleAnnotationKey]
+							if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+								items.Example = example
+							} else {
+								items.Example = 0
+							}
+						case "Bool":
+							items.Type = "bool"
+							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+								items.Example = example
+							} else {
+								items.Example = false
+							}
 						default:
 							items.Ref = "#/definitions/" + fItems
 						}
@@ -382,8 +399,19 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 				case rdl.BaseTypeInt32, rdl.BaseTypeInt64, rdl.BaseTypeInt16:
 					prop.Type = "integer"
 					prop.Format = strings.ToLower(fbt.String())
-					prop.Example = f.Annotations[ExampleAnnotationKey]
-				case rdl.BaseTypeStruct:
+					if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+						prop.Example = example
+					} else {
+						prop.Example = 0
+					}
+				case rdl.BaseTypeBool:
+					prop.Type = "bool"
+					if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+						prop.Example = example
+					} else {
+						prop.Example = false
+					}
+				case rdl.BaseTypeEnum, rdl.BaseTypeStruct:
 					prop.Ref = "#/definitions/" + string(f.Type)
 				case rdl.BaseTypeMap:
 					prop.Type = "object"
@@ -397,7 +425,18 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						case "Int32", "Int64", "Int16":
 							items.Type = "integer"
 							items.Format = strings.ToLower(fItems)
-							items.Example = f.Annotations[ExampleAnnotationKey]
+							if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+								items.Example = example
+							} else {
+								items.Example = 0
+							}
+						case "Bool":
+							items.Type = "bool"
+							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+								items.Example = example
+							} else {
+								items.Example = false
+							}
 						default:
 							items.Ref = "#/definitions/" + fItems
 						}
@@ -438,6 +477,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 			tmp = append(tmp, string(el.Symbol))
 		}
 		st.Enum = tmp
+		st.Type = "string"
 	case rdl.TypeVariantUnionTypeDef:
 		typedef := t.UnionTypeDef
 		fmt.Println("[" + typedef.Name + ": Swagger doesn't support unions]")
@@ -456,7 +496,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 type SwaggerDoc struct {
 	Swagger string       `json:"swagger"`
 	Info    *SwaggerInfo `json:"info"`
-	//Host        string                               `json:"host"`
+	Host        string                               `json:"host,omitempty" rdl:"optional"`
 	BasePath    string                               `json:"basePath"`
 	Schemes     []string                             `json:"schemes"`
 	Paths       map[string]map[string]*SwaggerAction `json:"paths,omitempty"`

@@ -208,6 +208,7 @@ func (gen *javaModelGenerator) generateHeader(banner string, namespace string) {
 	gen.imports = append(gen.imports, "import org.apache.commons.lang3.builder.HashCodeBuilder;\n")
 	gen.imports = append(gen.imports, "import org.apache.commons.lang3.builder.ToStringBuilder;\n")
 	gen.imports = append(gen.imports, "import org.apache.commons.lang3.builder.ToStringStyle;\n")
+	gen.imports = append(gen.imports, "import javax.xml.bind.annotation.XmlAnyElement;\n")
 }
 
 func (gen *javaModelGenerator) generateTypeComment(t *rdl.Type) {
@@ -607,8 +608,13 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 			ftypes = append(ftypes, ftype)
 			gen.appendToBody(fmt.Sprintf("    private %s %s;\n", ftype, fname))
 		}
+
 		gen.appendToBody("\n")
-		//gen.appendToBody(fmt.Sprintf("    public %s() { init(); }\n", name))
+		gen.appendToBody("    // This annotated field 'reserved' is used to handle the Moxy unmarshall error\n")
+		gen.appendToBody("    // case when user requests some unknown fields which are nullable.\n")
+		gen.appendToBody("    @XmlAnyElement(lax=true)\n")
+		gen.appendToBody("    private Object parsecReserved;")
+		gen.appendToBody("\n")
 		for i := range fields {
 			fname := fnames[i]
 			ftype := ftypes[i]
@@ -758,8 +764,12 @@ func upperFirst(s string) string {
 	if s == "" {
 		return ""
 	}
-	r, n := utf8.DecodeRuneInString(s)
-	return string(unicode.ToUpper(r)) + s[n:]
+	r0, n0 := utf8.DecodeRuneInString(s)
+	r1, _ := utf8.DecodeRuneInString(s[n0:])
+	if (r1 != utf8.RuneError && unicode.IsLower(r0) && unicode.IsUpper(r1)) {
+		return s;
+	}
+	return string(unicode.ToUpper(r0)) + s[n0:]
 }
 
 func (gen *javaModelGenerator) getValidationGroupValue(annotationValue string) string {

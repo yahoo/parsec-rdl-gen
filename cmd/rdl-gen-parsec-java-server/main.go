@@ -9,15 +9,16 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"github.com/ardielle/ardielle-go/rdl"
-	"github.com/yahoo/parsec-rdl-gen/utils"
 	"io/ioutil"
 	"log"
 	"os"
 	"sort"
+	"strconv"
 	"strings"
 	"text/template"
-	"strconv"
+
+	"github.com/ardielle/ardielle-go/rdl"
+	"github.com/yahoo/parsec-rdl-gen/utils"
 )
 
 const (
@@ -47,7 +48,6 @@ type javaServerGenerator struct {
 	imports        []string
 	genUsingPath   bool
 	namespace      string
-	basePath       string
 }
 
 func main() {
@@ -58,16 +58,15 @@ func main() {
 	genHandlerImplString := flag.String("i", "true", "Generate interface implementations")
 	genParsecErrorString := flag.String("e", "true", "Generate Parsec Error classes")
 	namespace := flag.String("ns", "", "Namespace")
-	basePath := flag.String("b", "", "Base path")
 	flag.Parse()
 
-	genAnnotations, err:= strconv.ParseBool(*genAnnotationsString)
+	genAnnotations, err := strconv.ParseBool(*genAnnotationsString)
 	checkErr(err)
-	genUsingPath, err:= strconv.ParseBool(*genUsingPathString)
+	genUsingPath, err := strconv.ParseBool(*genUsingPathString)
 	checkErr(err)
-	genHandlerImpl, err:= strconv.ParseBool(*genHandlerImplString)
+	genHandlerImpl, err := strconv.ParseBool(*genHandlerImplString)
 	checkErr(err)
-	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
+	genParsecError, err := strconv.ParseBool(*genParsecErrorString)
 	checkErr(err)
 
 	data, err := ioutil.ReadAll(os.Stdin)
@@ -80,7 +79,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			GenerateJavaServer(banner, &schema, *pOutdir, genAnnotations, genHandlerImpl, genUsingPath, genParsecError, *namespace, *basePath)
+			GenerateJavaServer(banner, &schema, *pOutdir, genAnnotations, genHandlerImpl, genUsingPath, genParsecError, *namespace)
 			os.Exit(0)
 		}
 	}
@@ -96,7 +95,7 @@ func checkErr(err error) {
 }
 
 // GenerateJavaServer generates the server code for the RDL-defined service
-func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, genHandlerImpl bool, genUsingPath bool, genParsecError bool, namespace string, basePath string) error {
+func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, genHandlerImpl bool, genUsingPath bool, genParsecError bool, namespace string) error {
 	reg := rdl.NewTypeRegistry(schema)
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
@@ -109,16 +108,16 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	if err != nil {
 		return err
 	}
-	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	gen.processTemplate(javaServerHandlerTemplate)
 	out.Flush()
 	file.Close()
 
 	for _, r := range schema.Resources {
 		if r.Async != nil && *r.Async {
-			javaServerMakeAsyncResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace, basePath)
+			javaServerMakeAsyncResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace)
 		} else if len(r.Outputs) > 0 {
-			javaServerMakeResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace, basePath)
+			javaServerMakeResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace)
 		}
 	}
 
@@ -139,7 +138,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 			if err != nil {
 				return err
 			}
-			gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+			gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 			packageName := utils.JavaGenerationPackage(schema, namespace)
 
 			// import user defined struct classes
@@ -163,7 +162,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	if err != nil {
 		return err
 	}
-	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	gen.processTemplate(javaServerContextTemplate)
 	out.Flush()
 	file.Close()
@@ -176,7 +175,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	if err != nil {
 		return err
 	}
-	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	for _, r := range schema.Resources {
 		gen.generateImportClass(r)
 	}
@@ -199,7 +198,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	if err != nil {
 		return err
 	}
-	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	gen.processTemplate(javaServerInitTemplate)
 	out.Flush()
 	file.Close()
@@ -265,7 +264,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	return err
 }
 
-func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string, basePath string) error {
+func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string) error {
 	cName := utils.Capitalize(string(r.Type))
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
@@ -277,7 +276,7 @@ func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.T
 	if err != nil {
 		return err
 	}
-	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	funcMap := template.FuncMap{
 		"header":           func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":          func() string { return utils.JavaGenerationPackage(gen.schema, namespace) },
@@ -301,7 +300,7 @@ func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.T
 	return err
 }
 
-func javaServerMakeResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string, basePath string) error {
+func javaServerMakeResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string) error {
 	rType := string(r.Type)
 	cName := utils.Capitalize(rType)
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
@@ -314,7 +313,7 @@ func javaServerMakeResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRe
 	if err != nil {
 		return err
 	}
-	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, basePath}
+	gen := &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace}
 	funcMap := template.FuncMap{
 		"header":           func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":          func() string { return utils.JavaGenerationPackage(gen.schema, namespace) },
@@ -500,10 +499,10 @@ public final class {{rName}} {
 
     public boolean isAsync() { return false; }
 
-    public void done(int code, {{cName}} {{name}}{{range headerParamsSig}}, {{.}}{{end}}) {
-        Response resp = Response.status(code).entity({{name}}){{headerAssign}}
+    public void done(int _code, {{cName}} {{name}}{{range headerParamsSig}}, {{.}}{{end}}) {
+        Response _resp = Response.status(_code).entity({{name}}){{headerAssign}}
             .build();
-        throw new WebApplicationException(resp);
+        throw new WebApplicationException(_resp);
     }
 
     public void done(int code) {
@@ -532,27 +531,27 @@ import javax.ws.rs.WebApplicationException;
 import java.util.concurrent.TimeUnit;
 
 public final class {{rName}} implements TimeoutHandler {
-    private AsyncResponse async;
+    private AsyncResponse _async;
     private ResourceContext context;{{pathParamsDecls}}
     private int code; //normal result
     private int timeoutCode;
 
     {{rName}}(ResourceContext context, {{range pathParamsSig}}{{.}}, {{end}}AsyncResponse async) {
         this.context = context;
-        this.async = async;{{pathParamsAssign}}
+        this._async = async;{{pathParamsAssign}}
         this.code = 0;
         this.timeoutCode = 0;
     }
 
-    public boolean isAsync() { return async != null; }
+    public boolean isAsync() { return _async != null; }
 
-    public void done(int code, {{cName}} {{name}}{{range headerParamsSig}}, {{.}}{{end}}) {
-        Response resp = Response.status(code).entity({{name}}){{headerAssign}}
+    public void done(int _code, {{cName}} {{name}}{{range headerParamsSig}}, {{.}}{{end}}) {
+        Response _resp = Response.status(_code).entity({{name}}){{headerAssign}}
             .build();
-        if (async == null) {
-            throw new WebApplicationException(resp);
+        if (_async == null) {
+            throw new WebApplicationException(_resp);
         }
-        async.resume(resp);
+        _async.resume(_resp);
     }
 
     public void done(int code) {
@@ -563,34 +562,34 @@ public final class {{rName}} implements TimeoutHandler {
         this.code = code;
         //to do: check if the exception is declared, and that the entity is of the declared type
         WebApplicationException err = new WebApplicationException(Response.status(code).entity(entity).build());
-        if (async == null) {
+        if (_async == null) {
             throw err; //not optimal
         }
-        async.resume(err);
+        _async.resume(err);
     }
 
-    private static Map<String,Map<AsyncResponse,{{rName}}>> waiters = new HashMap<String,Map<AsyncResponse,{{rName}}>>();
+    private static Map<String,Map<AsyncResponse,{{rName}}>> _waiters = new HashMap<String,Map<AsyncResponse,{{rName}}>>();
 
-    public void wait({{range pathParamsSig}}{{.}}, {{end}}int timeout, int normalStatus, int timeoutStatus) {
-        async.setTimeout(timeout, TimeUnit.SECONDS);
-        this.code = normalStatus;
-        this.timeoutCode = timeoutStatus;
-        synchronized (waiters) {
-            Map<AsyncResponse,{{rName}}> m = waiters.get({{pathParamsKey}});
+    public void wait({{range pathParamsSig}}{{.}}, {{end}}int _timeout, int _normalStatus, int _timeoutStatus) {
+        _async.setTimeout(_timeout, TimeUnit.SECONDS);
+        this.code = _normalStatus;
+        this.timeoutCode = _timeoutStatus;
+        synchronized (_waiters) {
+            Map<AsyncResponse,{{rName}}> m = _waiters.get({{pathParamsKey}});
             if (m == null) {
                 m = new HashMap<AsyncResponse,{{rName}}>();
-                waiters.put({{pathParamsKey}}, m);
+                _waiters.put({{pathParamsKey}}, m);
             }
-            m.put(async, this);
-            async.setTimeoutHandler(this);
+            m.put(_async, this);
+            _async.setTimeoutHandler(this);
         }
     }
 
     public void handleTimeout(AsyncResponse ar) {
         //the timeout is per-request.
         {{rName}} result = null;
-        synchronized (waiters) {
-            Map<AsyncResponse,{{rName}}> m = waiters.get({{pathParamsKey}});
+        synchronized (_waiters) {
+            Map<AsyncResponse,{{rName}}> m = _waiters.get({{pathParamsKey}});
             if (m != null) {
                 result = m.remove(ar);
             }
@@ -602,16 +601,16 @@ public final class {{rName}} implements TimeoutHandler {
 
     //this get called to notifyAll of changed state
     public static void notify({{range pathParamsSig}}{{.}}, {{end}}{{resultSig}}) {
-        Collection<{{rName}}> results = null;
-        synchronized (waiters) {
-            Map<AsyncResponse,{{rName}}> m = waiters.remove({{pathParamsKey}});
+        Collection<{{rName}}> _results = null;
+        synchronized (_waiters) {
+            Map<AsyncResponse,{{rName}}> m = _waiters.remove({{pathParamsKey}});
             if (m != null) {
-                results = m.values();
+                _results = m.values();
             }
         }
-        if (results != null) {
-            for ({{rName}} result : results) {
-                result.done(result.code, {{resultArgs}});
+        if (_results != null) {
+            for ({{rName}} _result : _results) {
+                _result.done(_result.code, {{resultArgs}});
             }
         }
     }
@@ -643,7 +642,6 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.hk2.utilities.binding.AbstractBinder;
 import org.glassfish.jersey.server.ResourceConfig;
-import org.glassfish.jersey.jetty.JettyHttpContainerFactory;
 import org.glassfish.jersey.servlet.ServletContainer;
 
 public class {{cName}}Server {
@@ -822,7 +820,7 @@ func (gen *javaServerGenerator) processTemplate(templateSource string) error {
 		"cName":       func() string { return utils.Capitalize(gen.name) },
 		"methodName":  func(r *rdl.Resource) string { return strings.ToLower(r.Method) + string(r.Type) + "Handler" }, //?
 		"methodPath":  func(r *rdl.Resource) string { return gen.resourcePath(r) },
-		"rootPath":    func() string { return utils.JavaGenerationRootPath(gen.schema, gen.basePath) },
+		"rootPath":    func() string { return utils.JavaGenerationRootPath(gen.schema) },
 		"rName": func(r *rdl.Resource) string {
 			return utils.Capitalize(strings.ToLower(r.Method)) + string(r.Type) + "Result"
 		},
@@ -852,16 +850,16 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 	}
 	s := ""
 	if resultWrapper {
-		s += "        ResourceContext context = _delegate.newResourceContext(_request, _response);\n"
+		s += "        ResourceContext _context = _delegate.newResourceContext(_request, _response);\n"
 	} else {
 		s += "        try {\n"
-		s += "            ResourceContext context = _delegate.newResourceContext(_request, _response);\n"
+		s += "            ResourceContext _context = _delegate.newResourceContext(_request, _response);\n"
 	}
 	var fargs []string
 	bodyName := ""
 	if r.Auth != nil {
 		if r.Auth.Authenticate {
-			s += "            context.authenticate();\n"
+			s += "            _context.authenticate();\n"
 		} else if r.Auth.Action != "" && r.Auth.Resource != "" {
 			resource := r.Auth.Resource
 			i := strings.Index(resource, "{")
@@ -875,7 +873,7 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 				i = strings.Index(resource, "{")
 			}
 			resource = "\"" + resource + "\""
-			s += fmt.Sprintf("            context.authorize(%q, %s, null);\n", r.Auth.Action, resource)
+			s += fmt.Sprintf("            _context.authorize(%q, %s, null);\n", r.Auth.Action, resource)
 			//what about the domain variant?
 		} else {
 			log.Println("*** Badly formed auth spec in resource input:", r)
@@ -904,20 +902,20 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 	}
 	if resultWrapper {
 		rName := utils.Capitalize(methName) + "Result"
-		s += "        " + rName + " result = new " + rName + "(context"
+		s += "        " + rName + " result = new " + rName + "(_context"
 		if async {
 			s += ", " + strings.Join(append(gen.makePathParamsArgs(r), "asyncResp"), ", ")
 		}
 		s += ");\n"
 		sargs += ", result"
-		s += "        _delegate." + methName + "(context" + sargs + ");\n"
+		s += "        _delegate." + methName + "(_context" + sargs + ");\n"
 	} else {
 		noContent := (r.Expected == "NO_CONTENT" && r.Alternatives == nil) || returnType == "Null"
 		s += "            "
 		if !noContent {
 			s += returnType + " e = "
 		}
-		s += "_delegate." + methName + "(context" + sargs + ");\n"
+		s += "_delegate." + methName + "(_context" + sargs + ");\n"
 		if len(r.Outputs) > 0 {
 			for _, o := range r.Outputs {
 				s += fmt.Sprintf("            _response.addHeader(%q, e.%s);\n", o.Header, o.Name)
@@ -932,24 +930,24 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 			s += "            return Response.status(ResourceException." + r.Expected + ").entity(e).build();\n"
 		}
 		s += "        } catch (ResourceException e) {\n"
-		s += "            int code = e.getCode();\n"
-		s += "            switch (code) {\n"
+		s += "            int _code = e.getCode();\n"
+		s += "            switch (_code) {\n"
 		if len(r.Alternatives) > 0 {
 			for _, alt := range r.Alternatives {
 				s += "            case ResourceException." + alt + ":\n"
 			}
-			s += "                throw typedException(code, e, " + returnType + ".class);\n"
+			s += "                throw typedException(_code, e, " + returnType + ".class);\n"
 		}
 		if r.Exceptions != nil && len(r.Exceptions) > 0 {
 			for ecode, edef := range r.Exceptions {
 				etype := edef.Type
 				s += "            case ResourceException." + ecode + ":\n"
-				s += "                throw typedException(code, e, " + etype + ".class);\n"
+				s += "                throw typedException(_code, e, " + etype + ".class);\n"
 			}
 		}
 		s += "            default:\n"
-		s += "                System.err.println(\"*** Warning: undeclared exception (\"+code+\") for resource " + methName + "\");\n"
-		s += "                throw typedException(code, e, ResourceError.class);\n" //? really
+		s += "                System.err.println(\"*** Warning: undeclared exception (\"+_code+\") for resource " + methName + "\");\n"
+		s += "                throw typedException(_code, e, ResourceError.class);\n" //? really
 		s += "            }\n"
 		s += "        }\n"
 	}
@@ -1027,14 +1025,14 @@ func (gen *javaServerGenerator) handlerSignature(r *rdl.Resource) string {
 	if len(r.Produces) > 0 {
 		spec += "@Produces({\"" + strings.Join(r.Produces, ", ") + "\"})\n"
 	} else {
-		spec += "@Produces(MediaType.APPLICATION_JSON)\n"
+		spec += "@Produces(\"application/json;charset=utf-8\")\n"
 	}
 	switch r.Method {
 	case "POST", "PUT":
 		if len(r.Consumes) > 0 {
 			spec += "    @Consumes({\"" + strings.Join(r.Consumes, ", ") + "\"})\n"
 		} else {
-			spec += "    @Consumes(MediaType.APPLICATION_JSON)\n"
+			spec += "    @Consumes(\"application/json;charset=utf-8\")\n"
 		}
 	}
 	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath)

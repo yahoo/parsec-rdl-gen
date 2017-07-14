@@ -49,7 +49,31 @@
                 "UNAUTHORIZED": {
                     "type": "ResourceError"
                 }
-            }
+            },
+            "name" : "getUserId"
+        },
+        {
+            "type": "User",
+            "method": "POST",
+            "path": "/wssid",
+            "inputs": [
+            ],
+            "expected": "OK",
+            "exceptions": {
+                "BAD_REQUEST": {
+                    "type": "ResourceError"
+                },
+                "FORBIDDEN": {
+                    "type": "ResourceError"
+                },
+                "INTERNAL_SERVER_ERROR": {
+                    "type": "ResourceError"
+                },
+                "UNAUTHORIZED": {
+                    "type": "ResourceError"
+                }
+            },
+            "name" : "fetchWssid"
         }
     ]
 }

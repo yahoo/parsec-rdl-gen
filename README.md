@@ -1,4 +1,4 @@
-# parsec-rdl-gen
+# parsec-rdl-gen [![Build Status](https://travis-ci.org/yahoo/parsec-rdl-gen.svg?branch=master)](https://travis-ci.org/yahoo/parsec-rdl-gen)
 
 Parsec Ardielle (RDL) External Generators
 
@@ -16,6 +16,30 @@ Sample usage for co-working with [ardielle-tools](https://github.com/ardielle/ar
     rdl generate [options] <parsec-java-model | parsec-java-server | parsec-java-client | parsec-swagger> <schema.rdl>
 
 Please refer to [ardielle-tools](https://github.com/ardielle/ardielle-tools) for more information.
+
+## How to build
+
+Please follow https://golang.org/doc/install to download and install the GO. You also need to set the GOPATH environment, the source code to checkout and build would belong this GOPATH setting, for instance, I set the GOPATH to /Users/guang001/Documents/workspace/go, then I execute the command: 
+```
+go get github.com/yahoo/parsec-rdl-gen/...
+```
+
+Then GO will checkout the source code to $GOPATH/src/github.com/yahoo/parsec-rdl-gen/, this should be /Users/guang001/Documents/workspace/go/src/github.com/yahoo/parsec-rdl-gen/ in my case, and 'go get' command will build the binary after the fetch code, the binary would be put in $GOPATH/bin/ path. The detail you could reference [How to Write Go Code](https://golang.org/doc/code.html).
+
+So, to build the parsec-rdl-gen, you only need execute: 'go get github.com/yahoo/parsec-rdl-gen/...' if you are ready the GO enviroment. If you need switch the git branch, you could:
+```
+cd /Users/guang001/Documents/workspace/go/src/github.com/yahoo/parsec-rdl-gen/
+git checkout -b dev
+```
+
+or change to your fork REPO:
+
+```
+cd /Users/guang001/Documents/workspace/go/src/github.com/yahoo/parsec-rdl-gen/
+git remote set-url origin git@git.corp.yahoo.com:guang001/apex.git
+```
+
+Note: The 'go get' command would not refetch(checkout) the code if target directory already exist.
 
 ## License
 

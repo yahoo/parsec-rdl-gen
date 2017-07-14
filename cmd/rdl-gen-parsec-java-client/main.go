@@ -53,51 +53,39 @@ func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns str
 
 	reg := rdl.NewTypeRegistry(schema)
 
-	packageSrcDir, err := utils.JavaGenerationSourceDir(schema, ns)
+	packageDir, err := utils.JavaGenerationDir(outdir, schema, ns)
 	if err != nil {
 		return err
 	}
 
 	cName := utils.Capitalize(string(schema.Name))
 
-	_, filePath := utils.GetOutputPathInfo(packageSrcDir, cName, "ClientImpl.java")
-	if _, err := os.Stat(filePath); err == nil {
-		fmt.Fprintln(os.Stderr, "Warning: interface implementation class exists, ignore: ", filePath)
-	} else {
-		out, file, _, err := utils.OutputWriter(packageSrcDir, cName, "ClientImpl.java")
-		if err != nil {
-			return err
-		}
-		gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
-		gen.processTemplate(javaClientTemplate)
-		out.Flush()
-		file.Close()
-		if gen.err != nil {
-			return gen.err
-		}
+	out, file, _, err := utils.OutputWriter(packageDir, cName, "ClientImpl.java")
+	if err != nil {
+		return err
+	}
+	gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
+	gen.processTemplate(javaClientTemplate)
+	out.Flush()
+	file.Close()
+	if gen.err != nil {
+		return gen.err
 	}
 
-	_, filePath = utils.GetOutputPathInfo(packageSrcDir, cName, "Client.java")
-	if _, err := os.Stat(filePath); err == nil {
-		fmt.Fprintln(os.Stderr, "Warning: interface class exists, ignore: ", filePath)
-	} else {
-		out, file, _, err := utils.OutputWriter(packageSrcDir, cName, "Client.java")
-		if err != nil {
-			return err
-		}
-		gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
-		gen.processTemplate(javaClientInterfaceTemplate)
-		out.Flush()
-		file.Close()
-		if gen.err != nil {
-			return gen.err
-		}
+	out, file, _, err = utils.OutputWriter(packageDir, cName, "Client.java")
+	if err != nil {
+		return err
 	}
-
-	packageDir, err := utils.JavaGenerationDir(outdir, schema, ns)
+	gen = &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
+	gen.processTemplate(javaClientInterfaceTemplate)
+	out.Flush()
+	file.Close()
+	if gen.err != nil {
+		return gen.err
+	}
 
 	//ResourceException - the throawable wrapper for alternate return types
-	out, file, _, err := utils.OutputWriter(packageDir, "ResourceException", ".java")
+	out, file, _, err = utils.OutputWriter(packageDir, "ResourceException", ".java")
 	if err != nil {
 		return err
 	}
@@ -150,13 +138,19 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"header":      func() string { return utils.JavaGenerationHeader(gen.banner) },
 		"package":     func() string { return utils.JavaGenerationPackage(gen.schema, gen.ns) },
 		"comment":     commentFun,
-		"methodSig":   func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r) },
+		"methodSigWithHeader":
+		               func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r, true) },
+		"methodSig":   func(r *rdl.Resource) string { return "public "+ gen.clientMethodSignature(r, false) },
+		"ContentOfNoHeaderMethod":
+		               func(r *rdl.Resource) string { return gen.clientMethodOverloadContent(r) },
 		"name":        func() string { return gen.name },
 		"cName":       func() string { return utils.Capitalize(gen.name) },
 		"lName":       func() string { return utils.Uncapitalize(gen.name) },
 		"needBody":    needBodyFunc,
 		"bodyObj":     func(r *rdl.Resource) string { return gen.getBodyObj(r) },
-		"iMethod":     func(r *rdl.Resource) string { return gen.clientMethodSignature(r) + ";" },
+		"iMethodWithHeader":
+		               func(r *rdl.Resource) string { return gen.clientMethodSignature(r, true) + ";" },
+		"iMethod":     func(r *rdl.Resource) string { return gen.clientMethodSignature(r, false) + ";" },
 		"builderExt":  func(r *rdl.Resource) string { return gen.builderExt(r) },
 		"origPackage": func() string { return utils.JavaGenerationOrigPackage(gen.schema, gen.ns) },
 		"origHeader":  func() string { return utils.JavaGenerationOrigHeader(gen.banner) },
@@ -208,8 +202,10 @@ func (gen *javaClientGenerator) needBody(r *rdl.Resource) bool {
 }
 
 const javaClientInterfaceTemplate = `{{origHeader}}
-package {{origPackage}};
+package {{origPackage}}.parsec_generated;
 
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import {{package}}.ResourceException;
 {{range .Types}}{{if .StructTypeDef}}{{if .StructTypeDef.Name}}import {{package}}.{{.StructTypeDef.Name}};
@@ -217,11 +213,12 @@ import {{package}}.ResourceException;
 
 public interface {{cName}}Client {
 {{range .Resources}}
-    {{iMethod .}}{{end}}
+    {{iMethod .}}
+    {{iMethodWithHeader .}}{{end}}
 }
 `
 const javaClientTemplate = `{{origHeader}}
-package {{origPackage}};
+package {{origPackage}}.parsec_generated;
 
 import {{package}}.ResourceException;
 {{range .Types}}{{if .StructTypeDef}}{{if .StructTypeDef.Name}}import {{package}}.{{.StructTypeDef.Name}};
@@ -241,6 +238,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 {{if needImportHashSet .Resources}}import java.util.HashSet;
 import java.util.Set;{{end}}
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -260,7 +258,7 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
     private String url;
 
     /** Headers. */
-    private final Map<String, String> headers;
+    private final Map<String, List<String>> defaultHeaders;
 
     /**
      * connection timeout.
@@ -272,9 +270,13 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
      */
     private static final int MAXIMUM_CONNECTIONS_TOTAL = 50;
 
+    public {{cName}}ClientImpl(String url) {
+        this(url, null);
+    }
+
     public {{cName}}ClientImpl(
         String url,
-        Map<String, String> headers
+        Map<String, List<String>> headers
     ) {
 
         ParsecAsyncHttpClient client  = null;
@@ -292,28 +294,36 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = new ObjectMapper();
         this.url = url;
-        this.headers = headers;
+        this.defaultHeaders = headers;
     }
 
     public {{cName}}ClientImpl(
             ParsecAsyncHttpClient client,
             ObjectMapper objectMapper,
             String url,
-            Map<String, String> headers
+            Map<String, List<String>> headers
     ) {
         this.parsecAsyncHttpClient = client;
         this.objectMapper = objectMapper;
         this.url = url;
-        this.headers = headers;
+        this.defaultHeaders = headers;
     }
 
-    private ParsecAsyncHttpRequest getRequest(String method, URI uri, String body) throws ResourceException {
+    private ParsecAsyncHttpRequest getRequest(
+            String method,
+            Map<String, List<String>> headers,
+            URI uri,
+            String body
+    ) throws ResourceException {
         Builder builder = new Builder();
 
         builder.setUri(uri);
         if (headers != null) {
-            for (Map.Entry<String, String> entry : headers.entrySet()) {
-                builder.addHeader(entry.getKey(), entry.getValue());
+            for (Map.Entry<String, List<String>> entry : headers.entrySet()) {
+                String headerKey = entry.getKey();
+                for (String headerValue: entry.getValue()) {
+                    builder.addHeader(headerKey, headerValue);
+                }
             }
         }
 
@@ -330,32 +340,44 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
         }
         return request;
     }
+
+    public Map<String, List<String>> getDefaultHeaders() {
+        return defaultHeaders;
+    }
 {{range .Resources}}
     @Override
     {{methodSig .}} {
-        String path = "{{.Path}}";
-        String body = null;
+        {{ContentOfNoHeaderMethod .}}
+    }
+
+    @Override
+    {{methodSigWithHeader .}} {
+        String xPath = "{{.Path}}";
+        String xBody = null;
 {{if needBody .}}
         try {
-            body = objectMapper.writeValueAsString({{bodyObj .}});
+            xBody = objectMapper.writeValueAsString({{bodyObj .}});
         } catch (JsonProcessingException e) {
             LOGGER.error("JsonProcessingException: " + e.getMessage());
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 {{end}}
-        URI uri = UriBuilder.fromUri(url).path(path){{builderExt .}}
-        ParsecAsyncHttpRequest request = getRequest("{{.Method}}", uri, body);
+        URI xUri = UriBuilder.fromUri(this.url).path(xPath){{builderExt .}}
+        if (headers == null) {
+            headers = getDefaultHeaders();
+        }
+        ParsecAsyncHttpRequest xRequest = getRequest("{{.Method}}", headers, xUri, xBody);
 
 {{if needExpect .}}
-        Set<Integer> expectedStatus = new HashSet<>();
-        expectedStatus.add(ResourceException.{{.Expected}});
-        {{if .Alternatives}}{{range .Alternatives}}expectedStatus.add(ResourceException.{{.}});
+        Set<Integer> xExpectedStatus = new HashSet<>();
+        xExpectedStatus.add(ResourceException.{{.Expected}});
+        {{if .Alternatives}}{{range .Alternatives}}xExpectedStatus.add(ResourceException.{{.}});
 {{end}}{{end}}
-        AsyncHandler<{{returnType .}}> asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class, expectedStatus);
+        AsyncHandler<{{returnType .}}> xAsyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class, xExpectedStatus);
 {{else}}
-        AsyncHandler<{{returnType .}}> asyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class);
+        AsyncHandler<{{returnType .}}> xAsyncHandler = new DefaultAsyncCompletionHandler<>({{returnType .}}.class);
 {{end}}
-        return parsecAsyncHttpClient.criticalExecute(request, asyncHandler);
+        return parsecAsyncHttpClient.criticalExecute(xRequest, xAsyncHandler);
     }
 {{end}}
 }
@@ -368,11 +390,12 @@ func safeTypeVarName(rtype rdl.TypeRef) rdl.TypeName {
 }
 
 // todo: duplicate with server code, need integrate
-func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource) (string, []string) {
+func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, needParamWithType bool) (string, []string) {
 	var params []string
 	bodyType := string(safeTypeVarName(r.Type))
 	for _, v := range r.Inputs {
-		if v.Context != "" { //ignore these legacy things
+		if v.Context != "" {
+			//ignore these legacy things
 			log.Println("Warning: v1 style context param ignored:", v.Name, v.Context)
 			continue
 		}
@@ -381,9 +404,17 @@ func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource) (string, []string) {
 			bodyType = string(safeTypeVarName(v.Type))
 		}
 		optional := false // but different with server code, how?
-		params = append(params, utils.JavaType(reg, v.Type, optional, "", "")+" "+javaName(k))
+		if (needParamWithType) {
+			params = append(params, utils.JavaType(reg, v.Type, optional, "", "") + " " + javaName(k))
+		} else {
+			params = append(params, javaName(k))
+		}
 	}
-	return strings.ToLower(string(r.Method)) + string(bodyType), params
+	if r.Name != "" {
+		return utils.Uncapitalize(string(r.Name)), params
+	} else {
+		return strings.ToLower(string(r.Method)) + string(bodyType), params
+	}
 }
 
 // todo: duplicate with java-server.go
@@ -396,22 +427,31 @@ func javaName(name rdl.Identifier) string {
 	}
 }
 
-func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource) string {
+func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource, needHeader bool) string {
 	reg := gen.registry
 	returnType := utils.JavaType(reg, r.Type, true, "", "")
-	methName, params := javaMethodName(reg, r)
+	needParamWithType := true
+	methName, params := javaMethodName(reg, r, needParamWithType)
 	sparams := ""
-	if len(params) > 0 {
-		sparams = strings.Join(params, ", ")
+	if (needHeader) {
+		sparams = "Map<String, List<String>> headers"
 	}
-	if len(r.Outputs) > 0 {
-		if sparams == "" {
-			sparams = "java.util.Map<String,java.util.List<String>> headers"
-		} else {
-			sparams = sparams + ", java.util.Map<String,java.util.List<String>> headers"
+	if len(params) > 0 {
+		if (sparams != "") {
+			sparams = sparams + ", "
 		}
+		sparams = sparams + strings.Join(params, ", ")
 	}
 	return "CompletableFuture<" + returnType + "> " + methName + "(" + sparams + ") throws ResourceException"
 }
 
-
+func (gen *javaClientGenerator) clientMethodOverloadContent(r *rdl.Resource) string {
+	reg := gen.registry
+	needParamWithType := false
+	methName, params := javaMethodName(reg, r, needParamWithType)
+	paramsWithNull := "null"
+	if len(params) > 0 {
+		paramsWithNull = paramsWithNull + ", " + strings.Join(params, ", ")
+	}
+	return "return " + methName + "(" + paramsWithNull + ");"
+}
