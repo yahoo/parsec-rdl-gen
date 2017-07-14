@@ -126,6 +126,7 @@ public class ResourceError {
         return this;
     }
 
+    @Override
     public String toString() {
         return "{code: " + code + ", message: \"" + message + "\"}";
     }
