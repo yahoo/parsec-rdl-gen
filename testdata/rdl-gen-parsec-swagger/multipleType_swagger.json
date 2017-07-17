@@ -1,16 +1,19 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "The swagger API",
+        "title": "The multipleType API",
         "version": "1"
     },
-    "basePath": "/swagger/v1",
+    "basePath": "/multipleType/v1",
     "schemes": [],
     "paths": {
-        "/get/{id}": {
-            "get": {
+        "/post/{id}": {
+            "post": {
                 "tags": [
-                    "Response"
+                    "String"
+                ],
+                "consumes": [
+                    "application/json"
                 ],
                 "produces": [
                     "application/json"
@@ -21,13 +24,34 @@
                         "in": "path",
                         "type": "string",
                         "required": false
+                    },
+                    {
+                        "name": "flag",
+                        "in": "query",
+                        "type": "boolean",
+                        "required": true
+                    },
+                    {
+                        "name": "quantity",
+                        "in": "query",
+                        "type": "integer",
+                        "format": "int32",
+                        "required": true
+                    },
+                    {
+                        "name": "request",
+                        "in": "body",
+                        "schema": {
+                            "$ref": "#/definitions/Request"
+                        },
+                        "required": true
                     }
                 ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/Response"
+                            "type": "string"
                         }
                     },
                     "400": {
@@ -128,6 +152,75 @@
                 "NEVEC"
             ]
         },
+        "Request": {
+            "properties": {
+                "reqNum": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 0
+                },
+                "reqNums": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
+                    }
+                },
+                "reqOrder": {
+                    "$ref": "#/definitions/Order"
+                },
+                "reqOrders": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Order"
+                    }
+                },
+                "reqProperties": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/Property"
+                    }
+                },
+                "reqProperty": {
+                    "$ref": "#/definitions/Property"
+                },
+                "reqRecommendFuture": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "reqRecommendFutures": {
+                    "type": "array",
+                    "items": {
+                        "type": "boolean",
+                        "example": false
+                    }
+                },
+                "reqUserId": {
+                    "type": "string",
+                    "example": ""
+                },
+                "reqUserIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "example": ""
+                    }
+                }
+            },
+            "required": [
+                "reqProperty",
+                "reqProperties",
+                "reqUserId",
+                "reqUserIds",
+                "reqOrder",
+                "reqOrders",
+                "reqRecommendFuture",
+                "reqRecommendFutures",
+                "reqNum",
+                "reqNums"
+            ]
+        },
         "ResourceError": {
             "properties": {
                 "code": {
@@ -145,12 +238,12 @@
         },
         "Response": {
             "properties": {
-                "num": {
+                "respNum": {
                     "type": "integer",
                     "format": "int32",
                     "example": 0
                 },
-                "nums": {
+                "respNums": {
                     "type": "array",
                     "items": {
                         "type": "integer",
@@ -158,40 +251,40 @@
                         "example": 0
                     }
                 },
-                "order": {
+                "respOrder": {
                     "$ref": "#/definitions/Order"
                 },
-                "orders": {
+                "respOrders": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/Order"
                     }
                 },
-                "properties": {
+                "respProperties": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/Property"
                     }
                 },
-                "property": {
+                "respProperty": {
                     "$ref": "#/definitions/Property"
                 },
-                "recommendFuture": {
-                    "type": "bool",
+                "respRecommendFuture": {
+                    "type": "boolean",
                     "example": false
                 },
-                "recommendFutures": {
+                "respRecommendFutures": {
                     "type": "array",
                     "items": {
-                        "type": "bool",
+                        "type": "boolean",
                         "example": false
                     }
                 },
-                "userId": {
+                "respUserId": {
                     "type": "string",
                     "example": ""
                 },
-                "userIds": {
+                "respUserIds": {
                     "type": "array",
                     "items": {
                         "type": "string",
@@ -200,16 +293,16 @@
                 }
             },
             "required": [
-                "property",
-                "properties",
-                "userId",
-                "userIds",
-                "order",
-                "orders",
-                "recommendFuture",
-                "recommendFutures",
-                "num",
-                "nums"
+                "respProperty",
+                "respProperties",
+                "respUserId",
+                "respUserIds",
+                "respOrder",
+                "respOrders",
+                "respRecommendFuture",
+                "respRecommendFutures",
+                "respNum",
+                "respNums"
             ]
         }
     }

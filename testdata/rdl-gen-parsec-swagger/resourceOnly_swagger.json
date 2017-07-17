@@ -1,0 +1,124 @@
+{
+    "swagger": "2.0",
+    "info": {
+        "title": "The resourceOnly API",
+        "version": "1"
+    },
+    "basePath": "/resourceOnly/v1",
+    "schemes": [],
+    "paths": {
+        "/request": {
+            "post": {
+                "tags": [
+                    "string"
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "body",
+                        "in": "body",
+                        "type": "string",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/ResourceError"
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "definitions": {
+        "ParsecErrorBody": {
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "detail": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ParsecErrorDetail"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "message"
+            ]
+        },
+        "ParsecErrorDetail": {
+            "properties": {
+                "invalidValue": {
+                    "type": "string"
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "message"
+            ]
+        },
+        "ParsecResourceError": {
+            "properties": {
+                "error": {
+                    "$ref": "#/definitions/ParsecErrorBody"
+                }
+            },
+            "required": [
+                "error"
+            ]
+        },
+        "ResourceError": {
+            "properties": {
+                "code": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "message": {
+                    "type": "string"
+                }
+            },
+            "required": [
+                "code",
+                "message"
+            ]
+        }
+    }
+}

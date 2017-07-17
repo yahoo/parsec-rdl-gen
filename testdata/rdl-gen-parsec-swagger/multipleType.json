@@ -1,6 +1,6 @@
 {
     "namespace": "com.example",
-    "name": "swagger",
+    "name": "multipleType",
     "version": 1,
     "types": [
         {
@@ -48,28 +48,28 @@
                 "name": "Response",
                 "fields": [
                     {
-                        "name": "property",
+                        "name": "respProperty",
                         "type": "Property",
                         "annotations": {
                             "x_not_null": ""
                         }
                     },
                     {
-                        "name": "properties",
+                        "name": "respProperties",
                         "type": "Array",
                         "items": "Property"
                     },
                     {
-                        "name": "userId",
+                        "name": "respUserId",
                         "type": "String"
                     },
                     {
-                        "name": "userIds",
+                        "name": "respUserIds",
                         "type": "Array",
                         "items": "String"
                     },
                     {
-                        "name": "order",
+                        "name": "respOrder",
                         "type": "Order",
                         "annotations": {
                             "x_must_validate": "",
@@ -77,25 +77,85 @@
                         }
                     },
                     {
-                        "name": "orders",
+                        "name": "respOrders",
                         "type": "Array",
                         "items": "Order"
                     },
                     {
-                        "name": "recommendFuture",
+                        "name": "respRecommendFuture",
                         "type": "Bool"
                     },
                     {
-                        "name": "recommendFutures",
+                        "name": "respRecommendFutures",
                         "type": "Array",
                         "items": "Bool"
                     },
                     {
-                        "name": "num",
+                        "name": "respNum",
                         "type": "Int32"
                     },
                     {
-                        "name": "nums",
+                        "name": "respNums",
+                        "type": "Array",
+                        "items": "Int32"
+                    }
+                ]
+            }
+        },
+        {
+            "StructTypeDef": {
+                "type": "Struct",
+                "name": "Request",
+                "fields": [
+                    {
+                        "name": "reqProperty",
+                        "type": "Property",
+                        "annotations": {
+                            "x_not_null": ""
+                        }
+                    },
+                    {
+                        "name": "reqProperties",
+                        "type": "Array",
+                        "items": "Property"
+                    },
+                    {
+                        "name": "reqUserId",
+                        "type": "String"
+                    },
+                    {
+                        "name": "reqUserIds",
+                        "type": "Array",
+                        "items": "String"
+                    },
+                    {
+                        "name": "reqOrder",
+                        "type": "Order",
+                        "annotations": {
+                            "x_must_validate": "",
+                            "x_not_null": ""
+                        }
+                    },
+                    {
+                        "name": "reqOrders",
+                        "type": "Array",
+                        "items": "Order"
+                    },
+                    {
+                        "name": "reqRecommendFuture",
+                        "type": "Bool"
+                    },
+                    {
+                        "name": "reqRecommendFutures",
+                        "type": "Array",
+                        "items": "Bool"
+                    },
+                    {
+                        "name": "reqNum",
+                        "type": "Int32"
+                    },
+                    {
+                        "name": "reqNums",
                         "type": "Array",
                         "items": "Int32"
                     }
@@ -105,15 +165,29 @@
     ],
     "resources": [
         {
-            "type": "Response",
-            "method": "GET",
-            "path": "/get/{id}",
+            "type": "String",
+            "method": "POST",
+            "path": "/post/{id}",
             "inputs": [
                 {
                     "name": "id",
                     "type": "String",
                     "pathParam": true,
                     "optional": true
+                },
+                {
+                    "name": "flag",
+                    "type": "bool",
+                    "queryParam": "flag"
+                },
+                {
+                    "name": "quantity",
+                    "type": "int32",
+                    "queryParam": "quantity"
+                },
+                {
+                    "name": "request",
+                    "type": "Request"
                 }
             ],
             "expected": "OK",

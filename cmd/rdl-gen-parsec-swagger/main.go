@@ -205,16 +205,16 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 			}
 			responses := make(map[string]*SwaggerResponse)
 			expected := r.Expected
-			addSwaggerResponse(responses, string(r.Type), expected, "")
+			addSwaggerResponse(reg, responses, r.Type, expected, "")
 			if len(r.Alternatives) > 0 {
 				for _, alt := range r.Alternatives {
-					addSwaggerResponse(responses, string(r.Type), alt, "")
+					addSwaggerResponse(reg, responses, r.Type, alt, "")
 				}
 			}
 			if len(r.Exceptions) > 0 {
 				for sym, errdef := range r.Exceptions {
 					errType := errdef.Type //xxx
-					addSwaggerResponse(responses, errType, sym, errdef.Comment)
+					addSwaggerResponse(reg, responses, rdl.TypeRef(errType), sym, errdef.Comment)
 				}
 			}
 			action.Responses = responses
@@ -229,38 +229,44 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 		}
 		swag.Paths = paths
 	}
-	if len(schema.Types) > 0 {
-		defs := make(map[string]*SwaggerType)
-		for _, t := range schema.Types {
-			ref := makeSwaggerTypeDef(reg, t)
-			if ref != nil {
-				tName, _, _ := rdl.TypeInfo(t)
-				defs[string(tName)] = ref
-			}
+
+	//always generate Definitions for ResourceError
+	defs := make(map[string]*SwaggerType)
+	for _, t := range schema.Types {
+		ref := makeSwaggerTypeDef(reg, t)
+		if ref != nil {
+			tName, _, _ := rdl.TypeInfo(t)
+			defs[string(tName)] = ref
 		}
-		if true {
-			props := make(map[string]*SwaggerType)
-			codeType := new(SwaggerType)
-			t := "integer"
-			codeType.Type = t
-			f := "int32"
-			codeType.Format = f
-			props["code"] = codeType
-			msgType := new(SwaggerType)
-			t2 := "string"
-			msgType.Type = t2
-			props["message"] = msgType
-			prop := new(SwaggerType)
-			prop.Required = []string{"code", "message"}
-			prop.Properties = props
-			defs["ResourceError"] = prop
-		}
-		if genParsecError {
-			addParsecError(defs)
-		}
-		swag.Definitions = defs
 	}
+
+	genResourceError(defs)
+
+	if genParsecError {
+		addParsecError(defs)
+	}
+	swag.Definitions = defs
+
+	//}
 	return swag, nil
+}
+
+func genResourceError(defs map[string]*SwaggerType) {
+	props := make(map[string]*SwaggerType)
+	codeType := new(SwaggerType)
+	t := "integer"
+	codeType.Type = t
+	f := "int32"
+	codeType.Format = f
+	props["code"] = codeType
+	msgType := new(SwaggerType)
+	t2 := "string"
+	msgType.Type = t2
+	props["message"] = msgType
+	prop := new(SwaggerType)
+	prop.Required = []string{"code", "message"}
+	prop.Properties = props
+	defs["ResourceError"] = prop
 }
 
 func addParsecError(defs map[string]*SwaggerType) {
@@ -304,12 +310,17 @@ func addParsecError(defs map[string]*SwaggerType) {
 	defs["ParsecErrorDetail"] = errDetailProp
 }
 
-func addSwaggerResponse(responses map[string]*SwaggerResponse, errType string, sym string, errComment string) {
+func addSwaggerResponse(reg rdl.TypeRegistry, responses map[string]*SwaggerResponse, errType rdl.TypeRef, sym string, errComment string) {
 	code := rdl.StatusCode(sym)
 	var schema *SwaggerType
 	if sym != "NO_CONTENT" {
+		ptype, pformat, pswaggerType := makeSwaggerTypeRef(reg, errType)
 		schema = new(SwaggerType)
-		schema.Ref = "#/definitions/" + errType
+		schema.Type = ptype
+		schema.Format = pformat
+		if (pswaggerType != nil) {
+			schema.Ref = pswaggerType.Ref
+		}
 	}
 	description := rdl.StatusMessage(sym)
 	if errComment != "" {
@@ -331,6 +342,8 @@ func makeSwaggerTypeRef(reg rdl.TypeRegistry, itemTypeName rdl.TypeRef) (string,
 		return "number", "double", nil
 	case rdl.BaseTypeString:
 		return "string", "", nil
+	case rdl.BaseTypeBool:
+		return "boolean", "", nil
 	case rdl.BaseTypeTimestamp:
 		return "string", "date-time", nil
 	case rdl.BaseTypeUUID, rdl.BaseTypeSymbol:
@@ -382,7 +395,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 								items.Example = 0
 							}
 						case "Bool":
-							items.Type = "bool"
+							items.Type = "boolean"
 							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
@@ -405,7 +418,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						prop.Example = 0
 					}
 				case rdl.BaseTypeBool:
-					prop.Type = "bool"
+					prop.Type = "boolean"
 					if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 						prop.Example = example
 					} else {
@@ -431,7 +444,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 								items.Example = 0
 							}
 						case "Bool":
-							items.Type = "bool"
+							items.Type = "boolean"
 							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
@@ -465,6 +478,8 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 			case rdl.BaseTypeInt32, rdl.BaseTypeInt64, rdl.BaseTypeInt16:
 				items.Type = "integer"
 				items.Format = strings.ToLower(tItems)
+			case rdl.BaseTypeBool:
+				items.Type = "boolean"
 			default:
 				items.Ref = "#/definitions/" + tItems
 			}
@@ -483,7 +498,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 		fmt.Println("[" + typedef.Name + ": Swagger doesn't support unions]")
 	default:
 		switch bt {
-		case rdl.BaseTypeString, rdl.BaseTypeInt16, rdl.BaseTypeInt32, rdl.BaseTypeInt64, rdl.BaseTypeFloat32, rdl.BaseTypeFloat64:
+		case rdl.BaseTypeString, rdl.BaseTypeInt16, rdl.BaseTypeInt32, rdl.BaseTypeInt64, rdl.BaseTypeFloat32, rdl.BaseTypeFloat64, rdl.BaseTypeBool:
 			return nil
 		default:
 			panic(fmt.Sprintf("whoops: %v", t))

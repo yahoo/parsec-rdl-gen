@@ -12,7 +12,7 @@ import (
 )
 
 func TestGenerateImpl(test *testing.T) {
-	data, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/sample.json")
+	data, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/multipleType.json")
 	checkErrInTest(err, "can not read sample file", test)
 
 	var schema rdl.Schema
@@ -25,7 +25,30 @@ func TestGenerateImpl(test *testing.T) {
 	j, err := json.MarshalIndent(swaggerData, "", "    ")
 	checkErrInTest(err, "cannot marshal swagger", test)
 
-	expectedSampleSwagger, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/swagger.json")
+	expectedSampleSwagger, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/multipleType_swagger.json")
+	checkErrInTest(err, "cannot read swagger json file", test)
+
+	if (string(j) != string(expectedSampleSwagger)) {
+		test.Errorf("sample swagger json not generated as expected, real: \n%s\n, expected: \n%s\n",
+			string(j), string(expectedSampleSwagger))
+	}
+}
+
+func TestNoTypes(test *testing.T) {
+	data, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/resourceOnly.json")
+	checkErrInTest(err, "can not read sample file", test)
+
+	var schema rdl.Schema
+	err = json.Unmarshal(data, &schema)
+	checkErrInTest(err, "unmarshal sample data fail", test)
+
+	genParsecError := true
+	swaggerData, err := swagger(&schema, genParsecError, "", "", "")
+	checkErrInTest(err, "cannot generate swagger", test)
+	j, err := json.MarshalIndent(swaggerData, "", "    ")
+	checkErrInTest(err, "cannot marshal swagger", test)
+
+	expectedSampleSwagger, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/resourceOnly_swagger.json")
 	checkErrInTest(err, "cannot read swagger json file", test)
 
 	if (string(j) != string(expectedSampleSwagger)) {
