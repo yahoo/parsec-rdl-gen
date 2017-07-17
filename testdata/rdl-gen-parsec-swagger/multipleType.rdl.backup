@@ -1,0 +1,79 @@
+namespace com.example;
+name multipleType;
+version 1;
+
+type Property Enum {
+    AUCTION,   // TW Auctions
+    MALL,      // TW MarketPlace
+    SHOPPING,  // TW Shopping
+    NEVEC,     // TW NEVEC
+}
+
+type Order struct (x_object) {
+    string name;
+}
+
+type Response struct {
+    Property respProperty (x_not_null);
+
+    array<Property> respProperties;
+
+    string respUserId;
+
+    array<string> respUserIds;
+
+    Order respOrder (x_not_null, x_must_validate);
+
+    array<Order> respOrders;
+
+    bool respRecommendFuture;
+
+    array<bool> respRecommendFutures;
+
+    int32 respNum;
+
+    array<int32> respNums;
+}
+
+
+type Request struct {
+    Property reqProperty (x_not_null);
+
+    array<Property> reqProperties;
+
+    string reqUserId;
+
+    array<string> reqUserIds;
+
+    Order reqOrder (x_not_null, x_must_validate);
+
+    array<Order> reqOrders;
+
+    bool reqRecommendFuture;
+
+    array<bool> reqRecommendFutures;
+
+    int32 reqNum;
+
+    array<int32> reqNums;
+}
+
+resource String POST "/post/{id}?flag={flag}&quantity={quantity}" (name=getId) {
+
+	Request request;
+
+    String id (optional);
+
+	bool flag;
+
+	int32 quantity;
+
+    expected OK;
+    exceptions {
+        ResourceError BAD_REQUEST;
+        ResourceError NOT_FOUND;
+        ResourceError INTERNAL_SERVER_ERROR;
+        ResourceError UNAUTHORIZED;
+        ResourceError FORBIDDEN;
+    }
+}

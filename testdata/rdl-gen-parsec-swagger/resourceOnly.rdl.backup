@@ -1,0 +1,15 @@
+namespace com.example
+name resourceOnly
+version 1
+
+resource string POST "/request" {
+    string body;
+
+    expected OK;
+    exceptions {
+        ResourceError INTERNAL_SERVER_ERROR;
+        ResourceError BAD_REQUEST;
+        ResourceError UNAUTHORIZED;
+        ResourceError FORBIDDEN;
+    }
+}

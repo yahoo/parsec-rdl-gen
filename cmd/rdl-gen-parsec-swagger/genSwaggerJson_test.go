@@ -12,7 +12,7 @@ import (
 )
 
 func TestGenerateImpl(test *testing.T) {
-	data, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/sample.json")
+	data, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/multipleType.json")
 	checkErrInTest(err, "can not read sample file", test)
 
 	var schema rdl.Schema
@@ -25,7 +25,7 @@ func TestGenerateImpl(test *testing.T) {
 	j, err := json.MarshalIndent(swaggerData, "", "    ")
 	checkErrInTest(err, "cannot marshal swagger", test)
 
-	expectedSampleSwagger, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/swagger.json")
+	expectedSampleSwagger, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/multipleType_swagger.json")
 	checkErrInTest(err, "cannot read swagger json file", test)
 
 	if (string(j) != string(expectedSampleSwagger)) {
@@ -35,7 +35,7 @@ func TestGenerateImpl(test *testing.T) {
 }
 
 func TestNoTypes(test *testing.T) {
-	data, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/no_type_sample.json")
+	data, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/resourceOnly.json")
 	checkErrInTest(err, "can not read sample file", test)
 
 	var schema rdl.Schema
@@ -48,7 +48,7 @@ func TestNoTypes(test *testing.T) {
 	j, err := json.MarshalIndent(swaggerData, "", "    ")
 	checkErrInTest(err, "cannot marshal swagger", test)
 
-	expectedSampleSwagger, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/noType_swagger.json")
+	expectedSampleSwagger, err := ioutil.ReadFile("../../testdata/rdl-gen-parsec-swagger/resourceOnly_swagger.json")
 	checkErrInTest(err, "cannot read swagger json file", test)
 
 	if (string(j) != string(expectedSampleSwagger)) {

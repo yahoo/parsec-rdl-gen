@@ -1,10 +1,10 @@
 {
     "swagger": "2.0",
     "info": {
-        "title": "The noType API",
+        "title": "The resourceOnly API",
         "version": "1"
     },
-    "basePath": "/noType/v1",
+    "basePath": "/resourceOnly/v1",
     "schemes": [],
     "paths": {
         "/request": {
