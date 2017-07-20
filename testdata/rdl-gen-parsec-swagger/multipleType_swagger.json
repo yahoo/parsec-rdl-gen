@@ -45,6 +45,12 @@
                             "$ref": "#/definitions/Request"
                         },
                         "required": true
+                    },
+                    {
+                        "name": "wssid",
+                        "in": "header",
+                        "type": "string",
+                        "required": true
                     }
                 ],
                 "responses": {

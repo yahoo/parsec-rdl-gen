@@ -185,8 +185,8 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 						param.In = "query"
 						param.Name = in.QueryParam //swagger has no formal arg concept
 					} else if in.Header != "" {
-						//swagger has no header params
-						continue
+						param.In = "header"
+						param.Name = in.Header
 					} else {
 						param.In = "body"
 					}

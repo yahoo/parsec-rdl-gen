@@ -188,6 +188,11 @@
                 {
                     "name": "request",
                     "type": "Request"
+                },
+                {
+                    "name": "wssid",
+                    "type": "String",
+                    "header": "wssid"
                 }
             ],
             "expected": "OK",
