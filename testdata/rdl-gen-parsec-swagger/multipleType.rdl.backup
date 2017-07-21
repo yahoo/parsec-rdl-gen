@@ -62,6 +62,8 @@ resource String POST "/post/{id}?flag={flag}&quantity={quantity}" (name=getId) {
 
 	Request request;
 
+	String wssid (header="wssid");
+
     String id (optional);
 
 	bool flag;
