@@ -164,17 +164,18 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 }
 
 func (gen* javaClientGenerator) builderExt(r *rdl.Resource) string {
-	code := "\n"
-	spacePad := "                            "
+	code := ""
+	spacePad := "        "
 	for _, input := range r.Inputs {
 		iname := javaName(input.Name)
 		if input.PathParam {
-			code += spacePad + ".resolveTemplate(\"" + iname + "\", " + iname + ")\n"
+			code += spacePad + "xUriBuilder.resolveTemplate(\"" + iname + "\", " + iname + ");\n"
 		} else if input.QueryParam != "" {
-			code += spacePad + ".queryParam(\"" + iname + "\", " + iname + ")\n"
+			code += spacePad + "if (" + iname + " != null) {\n"
+			code += spacePad + "    xUriBuilder.queryParam(\"" + iname + "\", " + iname + ");\n"
+			code += spacePad + "}\n"
 		}
 	}
-	code += spacePad + ".build();"
 	return code
 }
 
@@ -362,7 +363,9 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 {{end}}
-        URI xUri = UriBuilder.fromUri(this.url).path(xPath){{builderExt .}}
+        UriBuilder xUriBuilder = UriBuilder.fromUri(this.url).path(xPath);
+{{builderExt .}}
+        URI xUri = xUriBuilder.build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
@@ -403,7 +406,7 @@ func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, needParamWithType boo
 		if v.QueryParam == "" && !v.PathParam && v.Header == "" {
 			bodyType = string(safeTypeVarName(v.Type))
 		}
-		optional := false // but different with server code, how?
+		optional := true
 		if (needParamWithType) {
 			params = append(params, utils.JavaType(reg, v.Type, optional, "", "") + " " + javaName(k))
 		} else {
