@@ -172,7 +172,7 @@ func (gen* javaClientGenerator) builderExt(r *rdl.Resource) string {
 			code += spacePad + "xUriBuilder.resolveTemplate(\"" + iname + "\", " + iname + ");\n"
 		} else if input.QueryParam != "" {
 			code += spacePad + "if (" + iname + " != null) {\n"
-			code += spacePad + "    xUriBuilder.queryParam(\"" + iname + "\", " + iname + ");\n"
+			code += spacePad + "    xUriBuilder.queryParam(\"" + input.QueryParam + "\", " + iname + ");\n"
 			code += spacePad + "}\n"
 		}
 	}
