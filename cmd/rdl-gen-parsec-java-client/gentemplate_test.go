@@ -106,9 +106,8 @@ func TestUriConstruct(test *testing.T) {
 	inputs := []*rdl.ResourceInput{{Name: "id", PathParam: true}}
 	r := &rdl.Resource{Inputs: inputs}
 	realOut := gen.builderExt(r)
-	expectedOut := `
-                            .resolveTemplate("id", id)
-                            .build();`
+	expectedOut := `        xUriBuilder.resolveTemplate("id", id);
+`
 	if realOut != expectedOut {
 		test.Errorf("uri builder not generate as expected: real: \n%s\n, expected: \n%s\n",
 			realOut, expectedOut)
