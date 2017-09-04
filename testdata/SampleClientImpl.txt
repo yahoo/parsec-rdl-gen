@@ -131,18 +131,18 @@ public class SampleClientImpl implements SampleClient {
     }
 
     @Override
-    public CompletableFuture<User> getUser(int id) throws ResourceException {
+    public CompletableFuture<User> getUser(Integer id) throws ResourceException {
         return getUser(null, id);
     }
 
     @Override
-    public CompletableFuture<User> getUser(Map<String, List<String>> headers, int id) throws ResourceException {
+    public CompletableFuture<User> getUser(Map<String, List<String>> headers, Integer id) throws ResourceException {
         String xPath = "/user/{id}";
         String xBody = null;
 
-        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
-                            .resolveTemplate("id", id)
-                            .build();
+        UriBuilder xUriBuilder = UriBuilder.fromUri(this.url).path(xPath);
+        xUriBuilder.resolveTemplate("id", id);
+        URI xUri = xUriBuilder.build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
@@ -171,8 +171,8 @@ public class SampleClientImpl implements SampleClient {
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
-        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
-                            .build();
+        UriBuilder xUriBuilder = UriBuilder.fromUri(this.url).path(xPath);
+        URI xUri = xUriBuilder.build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
@@ -188,12 +188,12 @@ public class SampleClientImpl implements SampleClient {
     }
 
     @Override
-    public CompletableFuture<User> putUser(int id, User user) throws ResourceException {
+    public CompletableFuture<User> putUser(Integer id, User user) throws ResourceException {
         return putUser(null, id, user);
     }
 
     @Override
-    public CompletableFuture<User> putUser(Map<String, List<String>> headers, int id, User user) throws ResourceException {
+    public CompletableFuture<User> putUser(Map<String, List<String>> headers, Integer id, User user) throws ResourceException {
         String xPath = "/user/{id}";
         String xBody = null;
 
@@ -204,9 +204,9 @@ public class SampleClientImpl implements SampleClient {
             throw new ResourceException(ResourceException.INTERNAL_SERVER_ERROR, e.getMessage());
         }
 
-        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
-                            .resolveTemplate("id", id)
-                            .build();
+        UriBuilder xUriBuilder = UriBuilder.fromUri(this.url).path(xPath);
+        xUriBuilder.resolveTemplate("id", id);
+        URI xUri = xUriBuilder.build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
@@ -219,18 +219,18 @@ public class SampleClientImpl implements SampleClient {
     }
 
     @Override
-    public CompletableFuture<User> deleteUser(int id) throws ResourceException {
+    public CompletableFuture<User> deleteUser(Integer id) throws ResourceException {
         return deleteUser(null, id);
     }
 
     @Override
-    public CompletableFuture<User> deleteUser(Map<String, List<String>> headers, int id) throws ResourceException {
+    public CompletableFuture<User> deleteUser(Map<String, List<String>> headers, Integer id) throws ResourceException {
         String xPath = "/user/{id}";
         String xBody = null;
 
-        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
-                            .resolveTemplate("id", id)
-                            .build();
+        UriBuilder xUriBuilder = UriBuilder.fromUri(this.url).path(xPath);
+        xUriBuilder.resolveTemplate("id", id);
+        URI xUri = xUriBuilder.build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
@@ -256,9 +256,11 @@ public class SampleClientImpl implements SampleClient {
         String xPath = "/users";
         String xBody = null;
 
-        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
-                            .queryParam("ids", ids)
-                            .build();
+        UriBuilder xUriBuilder = UriBuilder.fromUri(this.url).path(xPath);
+        if (ids != null) {
+            xUriBuilder.queryParam("ids", ids);
+        }
+        URI xUri = xUriBuilder.build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }

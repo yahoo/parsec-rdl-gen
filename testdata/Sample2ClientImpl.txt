@@ -128,18 +128,18 @@ public class SampleClientImpl implements SampleClient {
     }
 
     @Override
-    public CompletableFuture<User> getUserId(int id) throws ResourceException {
+    public CompletableFuture<User> getUserId(Integer id) throws ResourceException {
         return getUserId(null, id);
     }
 
     @Override
-    public CompletableFuture<User> getUserId(Map<String, List<String>> headers, int id) throws ResourceException {
+    public CompletableFuture<User> getUserId(Map<String, List<String>> headers, Integer id) throws ResourceException {
         String xPath = "/user/{id}";
         String xBody = null;
 
-        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
-                            .resolveTemplate("id", id)
-                            .build();
+        UriBuilder xUriBuilder = UriBuilder.fromUri(this.url).path(xPath);
+        xUriBuilder.resolveTemplate("id", id);
+        URI xUri = xUriBuilder.build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
@@ -161,8 +161,8 @@ public class SampleClientImpl implements SampleClient {
         String xPath = "/wssid";
         String xBody = null;
 
-        URI xUri = UriBuilder.fromUri(this.url).path(xPath)
-                            .build();
+        UriBuilder xUriBuilder = UriBuilder.fromUri(this.url).path(xPath);
+        URI xUri = xUriBuilder.build();
         if (headers == null) {
             headers = getDefaultHeaders();
         }
