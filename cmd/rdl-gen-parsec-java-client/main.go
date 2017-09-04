@@ -146,6 +146,7 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"name":        func() string { return gen.name },
 		"cName":       func() string { return utils.Capitalize(gen.name) },
 		"lName":       func() string { return utils.Uncapitalize(gen.name) },
+		"basePath":    func() string { return utils.JavaGenerationRootPath(gen.schema) },
 		"needBody":    needBodyFunc,
 		"bodyObj":     func(r *rdl.Resource) string { return gen.getBodyObj(r) },
 		"iMethodWithHeader":
@@ -353,7 +354,7 @@ public class {{cName}}ClientImpl implements {{cName}}Client {
 
     @Override
     {{methodSigWithHeader .}} {
-        String xPath = "{{.Path}}";
+        String xPath = "/api{{basePath}}{{.Path}}";
         String xBody = null;
 {{if needBody .}}
         try {
