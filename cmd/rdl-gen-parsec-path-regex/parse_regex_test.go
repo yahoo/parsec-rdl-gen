@@ -6,7 +6,6 @@ import (
 	"io/ioutil"
 	"os"
 	"encoding/json"
-	"github.com/yahoo/parsec-rdl-gen/utils"
 )
 
 func TestParseRegex(test *testing.T) {
