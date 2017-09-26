@@ -20,7 +20,7 @@ func TestParseRegex(test *testing.T) {
 		test.Error("unmarshal sample data fail")
 		os.Exit(1)
 	}
-	pathInfos := extractPathInfo(&schema)
+	pathInfos := extractPathInfo(&schema, "/api")
 	pathInfoJson, err := json.Marshal(pathInfos)
 	if err != nil {
 		test.Errorf("marshal json error: %v", err)
