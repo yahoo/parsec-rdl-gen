@@ -65,22 +65,3 @@ func TestPathRegexGenerator(test *testing.T) {
 	}
 }
 
-func TestBasePath(test *testing.T) {
-	data, err := ioutil.ReadFile("../../testdata/rdl.json")
-	if err != nil {
-		test.Error("can not read sample file ")
-		os.Exit(1)
-	}
-	var schema rdl.Schema
-	err = json.Unmarshal(data, &schema)
-	if err != nil {
-		test.Error("unmarshal sample data fail")
-		os.Exit(1)
-	}
-	expectedRootPath := "/mobilePayment/v1"
-	rootPath := utils.JavaGenerationRootPath(&schema)
-	if rootPath != expectedRootPath {
-		test.Error("JavaGenerationRootPath not gen as expected, expected: %v, actual: %v",
-			expectedRootPath, rootPath)
-	}
-}
