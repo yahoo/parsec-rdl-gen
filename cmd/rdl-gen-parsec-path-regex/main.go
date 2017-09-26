@@ -61,11 +61,12 @@ func genPathInfoFile(outDir string, rdlJson []byte, finalName string) error {
 func extractPathInfo(schema *rdl.Schema, finalName string) []uriInfo {
 	rootPath := utils.JavaGenerationRootPath(schema)
 	pathInfos := []uriInfo{}
+	pathPrefix := finalName + rootPath
 	for _, resource := range schema.Resources {
 		pathInfo := uriInfo{}
 		pathInfo.Method = resource.Method
-		pathInfo.Path = resource.Path
-		pathInfo.PathRegex = "^" + finalName + rootPath + genUriRegex(pathInfo.Path, pathInfo.Method)
+		pathInfo.Path = pathPrefix + resource.Path
+		pathInfo.PathRegex = "^" + genUriRegex(pathInfo.Path, pathInfo.Method)
 		pathInfos = append(pathInfos, pathInfo)
 	}
 	return pathInfos
