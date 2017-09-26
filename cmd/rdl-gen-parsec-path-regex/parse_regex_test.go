@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"encoding/json"
+	"github.com/yahoo/parsec-rdl-gen/utils"
 )
 
 func TestParseRegex(test *testing.T) {
@@ -20,7 +21,7 @@ func TestParseRegex(test *testing.T) {
 		test.Error("unmarshal sample data fail")
 		os.Exit(1)
 	}
-	pathInfos := extractPathInfo(&schema)
+	pathInfos := extractPathInfo(&schema, "/api")
 	pathInfoJson, err := json.Marshal(pathInfos)
 	if err != nil {
 		test.Errorf("marshal json error: %v", err)
@@ -64,3 +65,22 @@ func TestPathRegexGenerator(test *testing.T) {
 	}
 }
 
+func TestBasePath(test *testing.T) {
+	data, err := ioutil.ReadFile("../../testdata/rdl.json")
+	if err != nil {
+		test.Error("can not read sample file ")
+		os.Exit(1)
+	}
+	var schema rdl.Schema
+	err = json.Unmarshal(data, &schema)
+	if err != nil {
+		test.Error("unmarshal sample data fail")
+		os.Exit(1)
+	}
+	expectedRootPath := "/mobilePayment/v1"
+	rootPath := utils.JavaGenerationRootPath(&schema)
+	if rootPath != expectedRootPath {
+		test.Error("JavaGenerationRootPath not gen as expected, expected: %v, actual: %v",
+			expectedRootPath, rootPath)
+	}
+}

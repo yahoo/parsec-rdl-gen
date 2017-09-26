@@ -9,6 +9,7 @@ import (
 	"flag"
 	"io/ioutil"
 	"net/url"
+	"github.com/yahoo/parsec-rdl-gen/utils"
 )
 
 type uriInfo struct {
@@ -20,11 +21,12 @@ type uriInfo struct {
 func main() {
 	pOutdir := flag.String("o", ".", "Output directory")
 	flag.String("s", "", "RDL source file")
+	finalName := flag.String("f", "", "FinalName of jar package, will be a part of path in basePath")
 	flag.Parse()
 	var err error
 	var data []byte
 	if data, err = ioutil.ReadAll(os.Stdin); err == nil {
-		err = genPathInfoFile(*pOutdir, data);
+		err = genPathInfoFile(*pOutdir, data, *finalName);
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "*** %v\n", err)
@@ -33,7 +35,7 @@ func main() {
 	os.Exit(0)
 }
 
-func genPathInfoFile(outDir string, rdlJson []byte) error {
+func genPathInfoFile(outDir string, rdlJson []byte, finalName string) error {
 	var (
 		schema rdl.Schema
 		pathInfoJson []byte
@@ -42,7 +44,7 @@ func genPathInfoFile(outDir string, rdlJson []byte) error {
 	if err = json.Unmarshal(rdlJson, &schema); err != nil {
 		return err
 	}
-	pathInfos := extractPathInfo(&schema)
+	pathInfos := extractPathInfo(&schema, finalName)
 	if pathInfoJson, err = json.Marshal(pathInfos); err != nil {
 		return err
 	}
@@ -56,13 +58,14 @@ func genPathInfoFile(outDir string, rdlJson []byte) error {
 	return nil
 }
 
-func extractPathInfo(schema *rdl.Schema) []uriInfo {
+func extractPathInfo(schema *rdl.Schema, finalName string) []uriInfo {
+	rootPath := utils.JavaGenerationRootPath(schema)
 	pathInfos := []uriInfo{}
 	for _, resource := range schema.Resources {
 		pathInfo := uriInfo{}
 		pathInfo.Method = resource.Method
 		pathInfo.Path = resource.Path
-		pathInfo.PathRegex = genUriRegex(pathInfo.Path, pathInfo.Method)
+		pathInfo.PathRegex = "^" + finalName + rootPath + genUriRegex(pathInfo.Path, pathInfo.Method)
 		pathInfos = append(pathInfos, pathInfo)
 	}
 	return pathInfos
