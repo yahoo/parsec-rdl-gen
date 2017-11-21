@@ -592,12 +592,13 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 		ftypes := make([]string, 0, len(fields))
 		fannotations := make([]map[rdl.ExtendedAnnotation]string, 0, len(fields))
 		for _, f := range fields {
+			gen.appendToBody("\n")
 			if genAnnotations {
 				if len(f.Annotations) == 0 {
 					f.Annotations = utils.GetUserDefinedTypeAnnotations(f.Type, gen.schema.Types)
 				}
 				fannotations = append(fannotations, f.Annotations)
-				gen.generateStructFieldAnnotations(f.Annotations)
+				gen.generateStructFieldAnnotations(f.Annotations, false)
 			}
 
 			fname := javaFieldName(f.Name)
@@ -606,15 +607,18 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 
 			ftype := utils.JavaType(gen.registry, f.Type, optional, f.Items, f.Keys)
 			ftypes = append(ftypes, ftype)
-			gen.appendToBody(fmt.Sprintf("    private %s %s;\n", ftype, fname))
+
+			gen.appendToBody("    private ")
+			gen.generateStructFieldType(f.Type, optional, f.Items, f.Keys, false)
+			gen.appendToBody(fmt.Sprintf(" %s;\n", fname))
+
 		}
 
 		gen.appendToBody("\n")
 		gen.appendToBody("    // This annotated field 'reserved' is used to handle the Moxy unmarshall error\n")
 		gen.appendToBody("    // case when user requests some unknown fields which are nullable.\n")
 		gen.appendToBody("    @XmlAnyElement(lax=true)\n")
-		gen.appendToBody("    private Object parsecReserved;")
-		gen.appendToBody("\n")
+		gen.appendToBody("    private Object parsecReserved;\n")
 		for i := range fields {
 			fname := fnames[i]
 			ftype := ftypes[i]
@@ -635,9 +639,111 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 	}
 }
 
-func (gen *javaModelGenerator) generateStructFieldAnnotations(annotations map[rdl.ExtendedAnnotation]string) {
+func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef, isParam bool) {
+	if isParam {
+		annotations := utils.GetUserDefinedTypeAnnotations(rdlType, gen.schema.Types)
+		gen.generateStructFieldAnnotations(annotations, true)
+	}
+	t := gen.registry.FindType(rdlType)
+	if t == nil || t.Variant == 0 {
+		panic("Cannot find type '" + rdlType + "'")
+	}
+	bt := gen.registry.BaseType(t)
+	switch bt {
+	case rdl.BaseTypeAny:
+		gen.appendToBody("Object")
+	case rdl.BaseTypeString:
+		gen.appendToBody("String")
+	case rdl.BaseTypeSymbol, rdl.BaseTypeTimestamp, rdl.BaseTypeUUID:
+		gen.appendToBody("String")
+	case rdl.BaseTypeBool:
+		if optional {
+			gen.appendToBody("Boolean")
+		} else {
+			gen.appendToBody("boolean")
+		}
+	case rdl.BaseTypeInt8:
+		if optional {
+			gen.appendToBody("Byte")
+		} else {
+			gen.appendToBody("byte")
+		}
+	case rdl.BaseTypeInt16:
+		if optional {
+			gen.appendToBody("Short")
+		} else {
+			gen.appendToBody("short")
+		}
+	case rdl.BaseTypeInt32:
+		if optional {
+			gen.appendToBody("Integer")
+		} else {
+			gen.appendToBody("int")
+		}
+	case rdl.BaseTypeInt64:
+		if optional {
+			gen.appendToBody("Long")
+		} else {
+			gen.appendToBody("long")
+		}
+	case rdl.BaseTypeFloat32:
+		if optional {
+			gen.appendToBody("Float")
+		} else {
+			gen.appendToBody("float")
+		}
+	case rdl.BaseTypeFloat64:
+		if optional {
+			gen.appendToBody("Double")
+		} else {
+			gen.appendToBody("double")
+		}
+	case rdl.BaseTypeArray:
+		i := rdl.TypeRef("Any")
+		switch t.Variant {
+		case rdl.TypeVariantArrayTypeDef:
+			i = t.ArrayTypeDef.Items
+		default:
+			if items != "" && items != "Any" {
+				i = items
+			}
+		}
+		gen.appendToBody("List<")
+		gen.generateStructFieldType(i, true, "", "", true)
+		gen.appendToBody(">")
+	case rdl.BaseTypeMap:
+		k := rdl.TypeRef("Any")
+		i := rdl.TypeRef("Any")
+		switch t.Variant {
+		case rdl.TypeVariantMapTypeDef:
+			k = t.MapTypeDef.Keys
+			i = t.MapTypeDef.Items
+		default:
+			if keys != "" && keys != "Any" {
+				k = keys
+			}
+			if items != "" && keys != "Any" {
+				i = items
+			}
+		}
+		gen.appendToBody("Map<")
+		gen.generateStructFieldType(k, true, "", "", true)
+		gen.appendToBody(", ")
+		gen.generateStructFieldType(i, true, "", "", true)
+		gen.appendToBody(">")
+	case rdl.BaseTypeStruct:
+		if t.Variant == rdl.TypeVariantStructTypeDef && t.StructTypeDef.Name == "Struct" {
+			gen.appendToBody("Object")
+		} else {
+			gen.appendToBody(string(rdlType))
+		}
+	default:
+		gen.appendToBody(string(rdlType))
+	}
+}
+
+func (gen *javaModelGenerator) generateStructFieldAnnotations(annotations map[rdl.ExtendedAnnotation]string, isParam bool) {
 	regex := regexp.MustCompile(ValidationGroupsRegexPattern)
-	gen.appendToBody("\n")
 	for extendedKey, value := range annotations {
 		key := strings.TrimLeft(string(extendedKey), AnnotationPrefix)
 		match := regex.MatchString(value)
@@ -650,52 +756,52 @@ func (gen *javaModelGenerator) generateStructFieldAnnotations(annotations map[rd
 
 		switch key {
 		case "min":
-			gen.appendAnnotation("    @Min", value)
+			gen.appendAnnotation("@Min", value, isParam)
 			gen.appendImportClass(JavaxConstraintPackage + ".Min")
 		case "max":
-			gen.appendAnnotation("    @Max", value)
+			gen.appendAnnotation("@Max", value, isParam)
 			gen.appendImportClass(JavaxConstraintPackage + ".Max")
 		case "size":
-			gen.appendAnnotation("    @Size", value)
+			gen.appendAnnotation("@Size", value, isParam)
 			gen.appendImportClass(JavaxConstraintPackage + ".Size")
 		case "pattern":
-			gen.appendAnnotation("    @Pattern", value)
+			gen.appendAnnotation("@Pattern", value, isParam)
 			gen.appendImportClass(JavaxConstraintPackage + ".Pattern")
 		case "must_validate":
-			gen.appendAnnotation("    @Valid", "")
+			gen.appendAnnotation("@Valid", "", isParam)
 			gen.appendImportClass(JavaxValidationPackage + ".Valid")
 		case "name":
-			gen.appendAnnotation("    @XmlElement", fmt.Sprintf("name=\"%s\"", value))
+			gen.appendAnnotation("@XmlElement", fmt.Sprintf("name=\"%s\"", value), isParam)
 			gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".XmlElement")
 		case "not_null":
-			gen.appendAnnotation("    @NotNull", value)
+			gen.appendAnnotation("@NotNull", value, isParam)
 			gen.appendImportClass(JavaxConstraintPackage + ".NotNull")
 		case "null":
-			gen.appendAnnotation("    @Null", value)
+			gen.appendAnnotation("@Null", value, isParam)
 			gen.appendImportClass(JavaxConstraintPackage + ".Null")
 		case "not_blank":
-			gen.appendAnnotation("    @NotBlank", value)
+			gen.appendAnnotation("@NotBlank", value, isParam)
 			gen.appendImportClass(HibernateConstraintPackage + ".NotBlank")
 		case "not_empty":
-			gen.appendAnnotation("    @NotEmpty", value)
+			gen.appendAnnotation("@NotEmpty", value, isParam)
 			gen.appendImportClass(HibernateConstraintPackage + ".NotEmpty")
 		case "country_code":
-			gen.appendAnnotation("    @CountryCode", "")
+			gen.appendAnnotation("@CountryCode", "", isParam)
 			gen.appendImportClass(ParsecConstraintPackage + ".CountryCode")
 		case "currency":
-			gen.appendAnnotation("    @ValidCurrency", "")
+			gen.appendAnnotation("@ValidCurrency", "", isParam)
 			gen.appendImportClass(ParsecConstraintPackage + ".ValidCurrency")
 		case "language_tag":
-			gen.appendAnnotation("    @LanguageTag", "")
+			gen.appendAnnotation("@LanguageTag", "", isParam)
 			gen.appendImportClass(ParsecConstraintPackage + ".LanguageTag")
 		case "date_time":
-			gen.appendAnnotation("    @DateTime", "")
+			gen.appendAnnotation("@DateTime", "", isParam)
 			gen.appendImportClass(ParsecConstraintPackage + ".DateTime")
 		case "digits":
-			gen.appendAnnotation("    @Digits", value)
+			gen.appendAnnotation("@Digits", value, isParam)
 			gen.appendImportClass(JavaxConstraintPackage + ".Digits")
 		case "adapter":
-			gen.appendAnnotation("    @XmlJavaTypeAdapter", value)
+			gen.appendAnnotation("@XmlJavaTypeAdapter", value, isParam)
 			gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".adapters.XmlJavaTypeAdapter")
 		default:
 			// unrecognized annotation, do nothing
@@ -709,7 +815,7 @@ func (gen *javaModelGenerator) generateStructFieldGetterAnnotations(annotations 
 		key := strings.TrimLeft(string(extendedKey), AnnotationPrefix)
 		switch key {
 		case "name":
-			gen.appendAnnotation("    @XmlElement", fmt.Sprintf("name=\"%s\"", value))
+			gen.appendAnnotation("@XmlElement", fmt.Sprintf("name=\"%s\"", value), false)
 			gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".XmlElement")
 		default:
 			// unrecognized annotation, do nothing
@@ -723,7 +829,7 @@ func (gen *javaModelGenerator) generateStructFieldSetterAnnotations(annotations 
 		key := strings.TrimLeft(string(extendedKey), AnnotationPrefix)
 		switch key {
 		case "name":
-			gen.appendAnnotation("    @XmlElement", fmt.Sprintf("name=\"%s\"", value))
+			gen.appendAnnotation("@XmlElement", fmt.Sprintf("name=\"%s\"", value), false)
 			gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".XmlElement")
 		default:
 			// unrecognized annotation, do nothing
@@ -731,12 +837,21 @@ func (gen *javaModelGenerator) generateStructFieldSetterAnnotations(annotations 
 	}
 }
 
-func (gen *javaModelGenerator) appendAnnotation(key string, value string) {
+func (gen *javaModelGenerator) appendAnnotation(key string, value string, isParam bool) {
+	if isParam {
+		gen.appendToBody("\n        ")
+	} else {
+		gen.appendToBody("    ")
+	}
 	gen.appendToBody(key)
 	if value != "" {
 		gen.appendToBody(fmt.Sprintf("(%s)", value))
 	}
-	gen.appendToBody("\n")
+	if isParam {
+		gen.appendToBody(" ")
+	} else {
+		gen.appendToBody("\n")
+	}
 }
 
 func (gen *javaModelGenerator) appendImportClass(importClass string) {
