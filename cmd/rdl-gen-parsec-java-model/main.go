@@ -33,6 +33,10 @@ const (
 	ValidationGroupsRegexPattern  = "(^|[ ,])" + ValidationGroupsKey + "\\s?="
 )
 
+var (
+	ValidationGroupsRegex = regexp.MustCompile(ValidationGroupsRegexPattern)
+)
+
 // Version is set when building to contain the build version
 var Version string
 
@@ -593,12 +597,17 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 		fannotations := make([]map[rdl.ExtendedAnnotation]string, 0, len(fields))
 		for _, f := range fields {
 			gen.appendToBody("\n")
+
 			if genAnnotations {
 				if len(f.Annotations) == 0 {
 					f.Annotations = utils.GetUserDefinedTypeAnnotations(f.Type, gen.schema.Types)
 				}
 				fannotations = append(fannotations, f.Annotations)
-				gen.generateStructFieldAnnotations(f.Annotations, false)
+				for extendedKey, value := range f.Annotations {
+					gen.appendToBody("    ")
+					gen.generateValidationGroupAnnotation(extendedKey, value)
+					gen.appendToBody("\n")
+				}
 			}
 
 			fname := javaFieldName(f.Name)
@@ -609,7 +618,7 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 			ftypes = append(ftypes, ftype)
 
 			gen.appendToBody("    private ")
-			gen.generateStructFieldType(f.Type, optional, f.Items, f.Keys, false)
+			gen.generateStructFieldType(f.Type, optional, f.Items, f.Keys)
 			gen.appendToBody(fmt.Sprintf(" %s;\n", fname))
 
 		}
@@ -639,11 +648,7 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 	}
 }
 
-func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef, isParam bool) {
-	if isParam {
-		annotations := utils.GetUserDefinedTypeAnnotations(rdlType, gen.schema.Types)
-		gen.generateStructFieldAnnotations(annotations, true)
-	}
+func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) {
 	t := gen.registry.FindType(rdlType)
 	if t == nil || t.Variant == 0 {
 		panic("Cannot find type '" + rdlType + "'")
@@ -661,7 +666,7 @@ func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, opti
 			}
 		}
 		gen.appendToBody("List<")
-		gen.generateStructFieldType(i, true, "", "", true)
+		gen.generateStructFieldParamType(i, true, "", "")
 		gen.appendToBody(">")
 	case rdl.BaseTypeMap:
 		k := rdl.TypeRef("Any")
@@ -679,79 +684,86 @@ func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, opti
 			}
 		}
 		gen.appendToBody("Map<")
-		gen.generateStructFieldType(k, true, "", "", true)
+		gen.generateStructFieldParamType(k, true, "", "")
 		gen.appendToBody(", ")
-		gen.generateStructFieldType(i, true, "", "", true)
+		gen.generateStructFieldParamType(i, true, "", "")
 		gen.appendToBody(">")
 	default:
 		gen.appendToBody(utils.JavaType(gen.registry, rdlType, optional, items, keys))
 	}
 }
 
-func (gen *javaModelGenerator) generateStructFieldAnnotations(annotations map[rdl.ExtendedAnnotation]string, isParam bool) {
-	regex := regexp.MustCompile(ValidationGroupsRegexPattern)
+func (gen *javaModelGenerator) generateStructFieldParamType(rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) {
+	annotations := utils.GetUserDefinedTypeAnnotations(rdlType, gen.schema.Types)
 	for extendedKey, value := range annotations {
-		key := strings.TrimLeft(string(extendedKey), AnnotationPrefix)
-		match := regex.MatchString(value)
+		gen.appendToBody("\n        ")
+		gen.generateValidationGroupAnnotation(extendedKey, value)
+		gen.appendToBody(" ")
+	}
+	gen.generateStructFieldType(rdlType, optional, items, keys)
+}
 
-		// fmt.Fprintln(os.Stderr, "key=" + key + ",value=" + value)
-		// Checking if there are validation groups
-		if match {
-			value = gen.getValidationGroupValue(value)
-		}
+func (gen *javaModelGenerator) generateValidationGroupAnnotation(extendedKey rdl.ExtendedAnnotation, value string) {
+	key := strings.TrimLeft(string(extendedKey), AnnotationPrefix)
+	match := ValidationGroupsRegex.MatchString(value)
 
-		switch key {
-		case "min":
-			gen.appendAnnotation("@Min", value, isParam)
-			gen.appendImportClass(JavaxConstraintPackage + ".Min")
-		case "max":
-			gen.appendAnnotation("@Max", value, isParam)
-			gen.appendImportClass(JavaxConstraintPackage + ".Max")
-		case "size":
-			gen.appendAnnotation("@Size", value, isParam)
-			gen.appendImportClass(JavaxConstraintPackage + ".Size")
-		case "pattern":
-			gen.appendAnnotation("@Pattern", value, isParam)
-			gen.appendImportClass(JavaxConstraintPackage + ".Pattern")
-		case "must_validate":
-			gen.appendAnnotation("@Valid", "", isParam)
-			gen.appendImportClass(JavaxValidationPackage + ".Valid")
-		case "name":
-			gen.appendAnnotation("@XmlElement", fmt.Sprintf("name=\"%s\"", value), isParam)
-			gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".XmlElement")
-		case "not_null":
-			gen.appendAnnotation("@NotNull", value, isParam)
-			gen.appendImportClass(JavaxConstraintPackage + ".NotNull")
-		case "null":
-			gen.appendAnnotation("@Null", value, isParam)
-			gen.appendImportClass(JavaxConstraintPackage + ".Null")
-		case "not_blank":
-			gen.appendAnnotation("@NotBlank", value, isParam)
-			gen.appendImportClass(HibernateConstraintPackage + ".NotBlank")
-		case "not_empty":
-			gen.appendAnnotation("@NotEmpty", value, isParam)
-			gen.appendImportClass(HibernateConstraintPackage + ".NotEmpty")
-		case "country_code":
-			gen.appendAnnotation("@CountryCode", "", isParam)
-			gen.appendImportClass(ParsecConstraintPackage + ".CountryCode")
-		case "currency":
-			gen.appendAnnotation("@ValidCurrency", "", isParam)
-			gen.appendImportClass(ParsecConstraintPackage + ".ValidCurrency")
-		case "language_tag":
-			gen.appendAnnotation("@LanguageTag", "", isParam)
-			gen.appendImportClass(ParsecConstraintPackage + ".LanguageTag")
-		case "date_time":
-			gen.appendAnnotation("@DateTime", "", isParam)
-			gen.appendImportClass(ParsecConstraintPackage + ".DateTime")
-		case "digits":
-			gen.appendAnnotation("@Digits", value, isParam)
-			gen.appendImportClass(JavaxConstraintPackage + ".Digits")
-		case "adapter":
-			gen.appendAnnotation("@XmlJavaTypeAdapter", value, isParam)
-			gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".adapters.XmlJavaTypeAdapter")
-		default:
-			// unrecognized annotation, do nothing
-		}
+	// fmt.Fprintln(os.Stderr, "key=" + key + ",value=" + value)
+	// Checking if there are validation groups
+	if match {
+		value = gen.getValidationGroupValue(value)
+	}
+
+	switch key {
+	case "min":
+		gen.appendAnnotation("@Min", value)
+		gen.appendImportClass(JavaxConstraintPackage + ".Min")
+	case "max":
+		gen.appendAnnotation("@Max", value)
+		gen.appendImportClass(JavaxConstraintPackage + ".Max")
+	case "size":
+		gen.appendAnnotation("@Size", value)
+		gen.appendImportClass(JavaxConstraintPackage + ".Size")
+	case "pattern":
+		gen.appendAnnotation("@Pattern", value)
+		gen.appendImportClass(JavaxConstraintPackage + ".Pattern")
+	case "must_validate":
+		gen.appendAnnotation("@Valid", "")
+		gen.appendImportClass(JavaxValidationPackage + ".Valid")
+	case "name":
+		gen.appendAnnotation("@XmlElement", fmt.Sprintf("name=\"%s\"", value))
+		gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".XmlElement")
+	case "not_null":
+		gen.appendAnnotation("@NotNull", value)
+		gen.appendImportClass(JavaxConstraintPackage + ".NotNull")
+	case "null":
+		gen.appendAnnotation("@Null", value)
+		gen.appendImportClass(JavaxConstraintPackage + ".Null")
+	case "not_blank":
+		gen.appendAnnotation("@NotBlank", value)
+		gen.appendImportClass(HibernateConstraintPackage + ".NotBlank")
+	case "not_empty":
+		gen.appendAnnotation("@NotEmpty", value)
+		gen.appendImportClass(HibernateConstraintPackage + ".NotEmpty")
+	case "country_code":
+		gen.appendAnnotation("@CountryCode", "")
+		gen.appendImportClass(ParsecConstraintPackage + ".CountryCode")
+	case "currency":
+		gen.appendAnnotation("@ValidCurrency", "")
+		gen.appendImportClass(ParsecConstraintPackage + ".ValidCurrency")
+	case "language_tag":
+		gen.appendAnnotation("@LanguageTag", "")
+		gen.appendImportClass(ParsecConstraintPackage + ".LanguageTag")
+	case "date_time":
+		gen.appendAnnotation("@DateTime", "")
+		gen.appendImportClass(ParsecConstraintPackage + ".DateTime")
+	case "digits":
+		gen.appendAnnotation("@Digits", value)
+		gen.appendImportClass(JavaxConstraintPackage + ".Digits")
+	case "adapter":
+		gen.appendAnnotation("@XmlJavaTypeAdapter", value)
+		gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".adapters.XmlJavaTypeAdapter")
+	default:
+		// unrecognized annotation, do nothing
 	}
 }
 
@@ -761,7 +773,8 @@ func (gen *javaModelGenerator) generateStructFieldGetterAnnotations(annotations 
 		key := strings.TrimLeft(string(extendedKey), AnnotationPrefix)
 		switch key {
 		case "name":
-			gen.appendAnnotation("@XmlElement", fmt.Sprintf("name=\"%s\"", value), false)
+			gen.appendAnnotation("    @XmlElement", fmt.Sprintf("name=\"%s\"", value))
+			gen.appendToBody("\n")
 			gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".XmlElement")
 		default:
 			// unrecognized annotation, do nothing
@@ -775,7 +788,8 @@ func (gen *javaModelGenerator) generateStructFieldSetterAnnotations(annotations 
 		key := strings.TrimLeft(string(extendedKey), AnnotationPrefix)
 		switch key {
 		case "name":
-			gen.appendAnnotation("@XmlElement", fmt.Sprintf("name=\"%s\"", value), false)
+			gen.appendAnnotation("    @XmlElement", fmt.Sprintf("name=\"%s\"", value))
+			gen.appendToBody("\n")
 			gen.appendImportClass(JavaxXmlBindAnnotationPackage + ".XmlElement")
 		default:
 			// unrecognized annotation, do nothing
@@ -783,20 +797,10 @@ func (gen *javaModelGenerator) generateStructFieldSetterAnnotations(annotations 
 	}
 }
 
-func (gen *javaModelGenerator) appendAnnotation(key string, value string, isParam bool) {
-	if isParam {
-		gen.appendToBody("\n        ")
-	} else {
-		gen.appendToBody("    ")
-	}
+func (gen *javaModelGenerator) appendAnnotation(key string, value string) {
 	gen.appendToBody(key)
 	if value != "" {
 		gen.appendToBody(fmt.Sprintf("(%s)", value))
-	}
-	if isParam {
-		gen.appendToBody(" ")
-	} else {
-		gen.appendToBody("\n")
 	}
 }
 
