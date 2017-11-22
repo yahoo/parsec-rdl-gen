@@ -34,7 +34,7 @@ const (
 )
 
 var (
-	ValidationGroupsRegex = regexp.MustCompile(ValidationGroupsRegexPattern)
+	validationGroupsRegex = regexp.MustCompile(ValidationGroupsRegexPattern)
 )
 
 // Version is set when building to contain the build version
@@ -705,7 +705,7 @@ func (gen *javaModelGenerator) generateStructFieldParamType(rdlType rdl.TypeRef,
 
 func (gen *javaModelGenerator) generateValidationGroupAnnotation(extendedKey rdl.ExtendedAnnotation, value string) {
 	key := strings.TrimLeft(string(extendedKey), AnnotationPrefix)
-	match := ValidationGroupsRegex.MatchString(value)
+	match := validationGroupsRegex.MatchString(value)
 
 	// fmt.Fprintln(os.Stderr, "key=" + key + ",value=" + value)
 	// Checking if there are validation groups
