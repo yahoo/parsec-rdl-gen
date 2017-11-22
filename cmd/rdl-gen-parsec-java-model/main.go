@@ -535,6 +535,7 @@ func (gen *javaModelGenerator) generateStruct(t *rdl.Type, cName string, genAnno
 			st := t.StructTypeDef
 			f := utils.FlattenedFields(gen.registry, t)
 			gen.generateTypeComment(t)
+			gen.appendToBody(fmt.Sprintf("public final class %s implements java.io.Serializable {\n", st.Name))
 			gen.generateStructFields(f, st.Name, st.Comment, cName, st.Annotations, genAnnotations)
 			if gen.structHasFieldDefault(st) {
 				gen.appendToBody("\n    //\n    // sets up the instance according to its default field values, if any\n    //\n")
@@ -590,7 +591,6 @@ func (gen *javaModelGenerator) generateEnum(t *rdl.Type) {
 }
 
 func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef, name rdl.TypeName, comment string, cName string, annotations map[rdl.ExtendedAnnotation]string, genAnnotations bool) {
-	gen.appendToBody(fmt.Sprintf("public final class %s implements java.io.Serializable {\n", name))
 	if fields != nil {
 		fnames := make([]string, 0, len(fields))
 		ftypes := make([]string, 0, len(fields))
@@ -696,10 +696,14 @@ func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, opti
 
 func (gen *javaModelGenerator) generateStructFieldParamType(rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) {
 	annotations := utils.GetUserDefinedTypeAnnotations(rdlType, gen.schema.Types)
-	for extendedKey, value := range annotations {
-		gen.appendToBody("\n        ")
-		gen.generateValidationGroupAnnotation(extendedKey, value)
-		gen.appendToBody(" ")
+	if len(annotations) > 0 {
+		gen.appendToBody("\n")
+		for extendedKey, value := range annotations {
+			gen.appendToBody("    ")
+			gen.generateValidationGroupAnnotation(extendedKey, value)
+			gen.appendToBody("\n")
+		}
+		gen.appendToBody("        ")
 	}
 	gen.generateStructFieldType(rdlType, optional, items, keys)
 }
