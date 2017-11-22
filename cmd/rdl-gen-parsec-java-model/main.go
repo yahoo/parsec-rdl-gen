@@ -15,10 +15,10 @@ import (
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
-	"strconv"
 )
 
 const (
@@ -59,7 +59,7 @@ func main() {
 	namespace := flag.String("ns", "", "Namespace")
 	flag.Parse()
 
-	generateAnnotations, err:= strconv.ParseBool(*generateAnnotationsString)
+	generateAnnotations, err := strconv.ParseBool(*generateAnnotationsString)
 	checkErr(err)
 
 	data, err := ioutil.ReadAll(os.Stdin)
@@ -650,54 +650,6 @@ func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, opti
 	}
 	bt := gen.registry.BaseType(t)
 	switch bt {
-	case rdl.BaseTypeAny:
-		gen.appendToBody("Object")
-	case rdl.BaseTypeString:
-		gen.appendToBody("String")
-	case rdl.BaseTypeSymbol, rdl.BaseTypeTimestamp, rdl.BaseTypeUUID:
-		gen.appendToBody("String")
-	case rdl.BaseTypeBool:
-		if optional {
-			gen.appendToBody("Boolean")
-		} else {
-			gen.appendToBody("boolean")
-		}
-	case rdl.BaseTypeInt8:
-		if optional {
-			gen.appendToBody("Byte")
-		} else {
-			gen.appendToBody("byte")
-		}
-	case rdl.BaseTypeInt16:
-		if optional {
-			gen.appendToBody("Short")
-		} else {
-			gen.appendToBody("short")
-		}
-	case rdl.BaseTypeInt32:
-		if optional {
-			gen.appendToBody("Integer")
-		} else {
-			gen.appendToBody("int")
-		}
-	case rdl.BaseTypeInt64:
-		if optional {
-			gen.appendToBody("Long")
-		} else {
-			gen.appendToBody("long")
-		}
-	case rdl.BaseTypeFloat32:
-		if optional {
-			gen.appendToBody("Float")
-		} else {
-			gen.appendToBody("float")
-		}
-	case rdl.BaseTypeFloat64:
-		if optional {
-			gen.appendToBody("Double")
-		} else {
-			gen.appendToBody("double")
-		}
 	case rdl.BaseTypeArray:
 		i := rdl.TypeRef("Any")
 		switch t.Variant {
@@ -731,14 +683,8 @@ func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, opti
 		gen.appendToBody(", ")
 		gen.generateStructFieldType(i, true, "", "", true)
 		gen.appendToBody(">")
-	case rdl.BaseTypeStruct:
-		if t.Variant == rdl.TypeVariantStructTypeDef && t.StructTypeDef.Name == "Struct" {
-			gen.appendToBody("Object")
-		} else {
-			gen.appendToBody(string(rdlType))
-		}
 	default:
-		gen.appendToBody(string(rdlType))
+		gen.appendToBody(utils.JavaType(gen.registry, rdlType, optional, items, keys))
 	}
 }
 
@@ -881,8 +827,8 @@ func upperFirst(s string) string {
 	}
 	r0, n0 := utf8.DecodeRuneInString(s)
 	r1, _ := utf8.DecodeRuneInString(s[n0:])
-	if (r1 != utf8.RuneError && unicode.IsLower(r0) && unicode.IsUpper(r1)) {
-		return s;
+	if r1 != utf8.RuneError && unicode.IsLower(r0) && unicode.IsUpper(r1) {
+		return s
 	}
 	return string(unicode.ToUpper(r0)) + s[n0:]
 }
