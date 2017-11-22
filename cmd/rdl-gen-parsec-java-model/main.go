@@ -627,7 +627,8 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 		gen.appendToBody("    // This annotated field 'reserved' is used to handle the Moxy unmarshall error\n")
 		gen.appendToBody("    // case when user requests some unknown fields which are nullable.\n")
 		gen.appendToBody("    @XmlAnyElement(lax=true)\n")
-		gen.appendToBody("    private Object parsecReserved;\n")
+		gen.appendToBody("    private Object parsecReserved;")
+		gen.appendToBody("\n")
 		for i := range fields {
 			fname := fnames[i]
 			ftype := ftypes[i]
