@@ -63,30 +63,29 @@ func TestGenerateStructFieldType(t *testing.T) {
 		imports string
 	}{
 		{"Type", true, "", "", "Type", ""},
-		{"array", true, "Type", "", "List<\n" +
-			"    @Min(\n" +
-			"        groups = {\n" +
-			"            ParsecValidationGroups.Create.class,\n" +
-			"            ParsecValidationGroups.Update.class\n" +
-			"        }\n" +
-			"    )\n" +
-			"        Type>",
-			"import javax.validation.constraints.Min;\n"},
-		{"map", true, "Type", "Type", "Map<\n    @Min(\n" +
-			"        groups = {\n" +
-			"            ParsecValidationGroups.Create.class,\n" +
-			"            ParsecValidationGroups.Update.class\n" +
-			"        }\n" +
-			"    )\n" +
-			"        Type, \n" +
-			"    @Min(\n" +
-			"        groups = {\n" +
-			"            ParsecValidationGroups.Create.class,\n" +
-			"            ParsecValidationGroups.Update.class\n" +
-			"        }\n" +
-			"    )\n" +
-			"        Type>",
-			"import javax.validation.constraints.Min;\n"},
+		{"array", true, "Type", "", `List<
+    @Min(
+        groups = {
+            ParsecValidationGroups.Create.class,
+            ParsecValidationGroups.Update.class
+        }
+    )
+        Type>`, "import javax.validation.constraints.Min;\n"},
+		{"map", true, "Type", "Type", `Map<
+    @Min(
+        groups = {
+            ParsecValidationGroups.Create.class,
+            ParsecValidationGroups.Update.class
+        }
+    )
+        Type, 
+    @Min(
+        groups = {
+            ParsecValidationGroups.Create.class,
+            ParsecValidationGroups.Update.class
+        }
+    )
+        Type>`, "import javax.validation.constraints.Min;\n"},
 	}
 	for _, senario := range senarios {
 		validationGroups = make(map[string]struct{}, 0)
@@ -111,37 +110,37 @@ func TestGenerateStructFieldParamType(t *testing.T) {
 		body    string
 		imports string
 	}{
-		{"Type", true, "", "", "\n    @Min(\n" +
-			"        groups = {\n" +
-			"            ParsecValidationGroups.Create.class,\n" +
-			"            ParsecValidationGroups.Update.class\n" +
-			"        }\n" +
-			"    )\n        Type",
-			"import javax.validation.constraints.Min;\n"},
-		{"array", true, "Type", "", "List<\n" +
-			"    @Min(\n" +
-			"        groups = {\n" +
-			"            ParsecValidationGroups.Create.class,\n" +
-			"            ParsecValidationGroups.Update.class\n" +
-			"        }\n" +
-			"    )\n" +
-			"        Type>",
-			"import javax.validation.constraints.Min;\n"},
-		{"map", true, "Type", "Type", "Map<\n    @Min(\n" +
-			"        groups = {\n" +
-			"            ParsecValidationGroups.Create.class,\n" +
-			"            ParsecValidationGroups.Update.class\n" +
-			"        }\n" +
-			"    )\n" +
-			"        Type, \n" +
-			"    @Min(\n" +
-			"        groups = {\n" +
-			"            ParsecValidationGroups.Create.class,\n" +
-			"            ParsecValidationGroups.Update.class\n" +
-			"        }\n" +
-			"    )\n" +
-			"        Type>",
-			"import javax.validation.constraints.Min;\n"},
+		{"Type", true, "", "", `
+    @Min(
+        groups = {
+            ParsecValidationGroups.Create.class,
+            ParsecValidationGroups.Update.class
+        }
+    )
+        Type`, "import javax.validation.constraints.Min;\n"},
+		{"array", true, "Type", "", `List<
+    @Min(
+        groups = {
+            ParsecValidationGroups.Create.class,
+            ParsecValidationGroups.Update.class
+        }
+    )
+        Type>`, "import javax.validation.constraints.Min;\n"},
+		{"map", true, "Type", "Type", `Map<
+    @Min(
+        groups = {
+            ParsecValidationGroups.Create.class,
+            ParsecValidationGroups.Update.class
+        }
+    )
+        Type, 
+    @Min(
+        groups = {
+            ParsecValidationGroups.Create.class,
+            ParsecValidationGroups.Update.class
+        }
+    )
+        Type>`, "import javax.validation.constraints.Min;\n"},
 	}
 	for _, senario := range senarios {
 		validationGroups = make(map[string]struct{}, 0)
@@ -182,12 +181,12 @@ func TestGenerateValidationGroupAnnotation(t *testing.T) {
 		{"x_digits", "value", "@Digits(value)", "import javax.validation.constraints.Digits;\n"},
 		{"x_adapter", "value", "@XmlJavaTypeAdapter(value)", "import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;\n"},
 		// groups
-		{"x_min", "groups=create|update", "@Min(\n" +
-			"        groups = {\n" +
-			"            ParsecValidationGroups.Create.class,\n" +
-			"            ParsecValidationGroups.Update.class\n" +
-			"        }\n" +
-			"    )", "import javax.validation.constraints.Min;\n"},
+		{"x_min", "groups=create|update", `@Min(
+        groups = {
+            ParsecValidationGroups.Create.class,
+            ParsecValidationGroups.Update.class
+        }
+    )`, "import javax.validation.constraints.Min;\n"},
 	}
 	for _, senario := range senarios {
 		validationGroups = make(map[string]struct{}, 0)
