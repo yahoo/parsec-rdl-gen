@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -129,7 +130,7 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> getUserId(Integer id) throws ResourceException {
-        return getUserId(null, id);
+        return getUserId(Collections.emptyMap(), id);
     }
 
     @Override
@@ -153,7 +154,7 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> fetchWssid() throws ResourceException {
-        return fetchWssid(null);
+        return fetchWssid(Collections.emptyMap());
     }
 
     @Override
