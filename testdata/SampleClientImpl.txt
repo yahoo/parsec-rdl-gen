@@ -23,6 +23,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -132,7 +133,7 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> getUser(Integer id) throws ResourceException {
-        return getUser(null, id);
+        return getUser(Collections.emptyMap(), id);
     }
 
     @Override
@@ -156,7 +157,7 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> postUser(User user) throws ResourceException {
-        return postUser(null, user);
+        return postUser(Collections.emptyMap(), user);
     }
 
     @Override
@@ -189,7 +190,7 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> putUser(Integer id, User user) throws ResourceException {
-        return putUser(null, id, user);
+        return putUser(Collections.emptyMap(), id, user);
     }
 
     @Override
@@ -220,7 +221,7 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<User> deleteUser(Integer id) throws ResourceException {
-        return deleteUser(null, id);
+        return deleteUser(Collections.emptyMap(), id);
     }
 
     @Override
@@ -248,7 +249,7 @@ public class SampleClientImpl implements SampleClient {
 
     @Override
     public CompletableFuture<Users> getUsers(String ids) throws ResourceException {
-        return getUsers(null, ids);
+        return getUsers(Collections.emptyMap(), ids);
     }
 
     @Override

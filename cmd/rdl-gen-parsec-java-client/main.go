@@ -239,6 +239,7 @@ import javax.ws.rs.core.UriBuilder;
 import java.net.URI;
 {{if needImportHashSet .Resources}}import java.util.HashSet;
 import java.util.Set;{{end}}
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -451,9 +452,9 @@ func (gen *javaClientGenerator) clientMethodOverloadContent(r *rdl.Resource) str
 	reg := gen.registry
 	needParamWithType := false
 	methName, params := javaMethodName(reg, r, needParamWithType)
-	paramsWithNull := "null"
+	paramsWithEmptyMap := "Collections.emptyMap()"
 	if len(params) > 0 {
-		paramsWithNull = paramsWithNull + ", " + strings.Join(params, ", ")
+		paramsWithEmptyMap = paramsWithEmptyMap + ", " + strings.Join(params, ", ")
 	}
-	return "return " + methName + "(" + paramsWithNull + ");"
+	return "return " + methName + "(" + paramsWithEmptyMap + ");"
 }
