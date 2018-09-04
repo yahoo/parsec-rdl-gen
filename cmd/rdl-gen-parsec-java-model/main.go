@@ -834,12 +834,8 @@ func upperFirst(s string) string {
 	if s == "" {
 		return ""
 	}
-	r0, n0 := utf8.DecodeRuneInString(s)
-	r1, _ := utf8.DecodeRuneInString(s[n0:])
-	if r1 != utf8.RuneError && unicode.IsLower(r0) && unicode.IsUpper(r1) {
-		return s
-	}
-	return string(unicode.ToUpper(r0)) + s[n0:]
+	r, n := utf8.DecodeRuneInString(s)
+	return string(unicode.ToUpper(r)) + s[n:]
 }
 
 func (gen *javaModelGenerator) getValidationGroupValue(annotationValue string) string {
