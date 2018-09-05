@@ -364,8 +364,9 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 		st.Description = typedef.Comment
 		props := make(map[string]*SwaggerType)
 		var required []string
-		if len(typedef.Fields) > 0 {
-			for _, f := range typedef.Fields {
+		fields := utils.FlattenedFields(reg, t)
+		if len(fields) > 0 {
+			for _, f := range fields {
 				if !f.Optional {
 					required = append(required, string(f.Name))
 				}
