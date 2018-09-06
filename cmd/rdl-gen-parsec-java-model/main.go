@@ -61,12 +61,20 @@ func main() {
 	flag.String("s", "", "RDL source file")
 	generateAnnotationsString := flag.String("a", "true", "RDL source file")
 	namespace := flag.String("ns", "", "Namespace")
+	dataFile := flag.String("df", "", "JSON representation of the schema file")
+	pc := flag.String("pc", "false", "add '_Pc' postfix to the generated java class")
 	flag.Parse()
 
 	generateAnnotations, err := strconv.ParseBool(*generateAnnotationsString)
 	checkErr(err)
+	avoidClashing, err := strconv.ParseBool(*pc)
 
-	data, err := ioutil.ReadAll(os.Stdin)
+	var data []byte
+	if *dataFile != "" {
+		data, err = ioutil.ReadFile(*dataFile)
+	} else {
+		data, err = ioutil.ReadAll(os.Stdin)
+	}
 	banner := "parsec-rdl-gen (development version)"
 	if Version != "" {
 		banner = fmt.Sprintf("parsec-rdl-gen %s %s", Version, BuildDate)
@@ -76,7 +84,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			GenerateJavaModel(banner, &schema, *pOutdir, generateAnnotations, *namespace)
+			GenerateJavaModel(banner, &schema, *pOutdir, generateAnnotations, *namespace, avoidClashing)
 			os.Exit(0)
 		}
 	}
@@ -92,7 +100,7 @@ func checkErr(err error) {
 }
 
 // GenerateJavaModel generates the model code for the types defined in the RDL schema.
-func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, namespace string) error {
+func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, namespace string, avoidClashing bool) error {
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
 		return err
@@ -100,7 +108,7 @@ func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnno
 	validationGroups = make(map[string]struct{}, 0)
 	registry := rdl.NewTypeRegistry(schema)
 	for _, t := range schema.Types {
-		err := generateJavaType(banner, schema, registry, packageDir, t, genAnnotations, namespace)
+		err := generateJavaType(banner, schema, registry, packageDir, t, genAnnotations, namespace, avoidClashing)
 		if err != nil {
 			return err
 		}
@@ -109,7 +117,9 @@ func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnno
 	return nil
 }
 
-func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegistry, outdir string, t *rdl.Type, genAnnotations bool, namespace string) error {
+func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegistry, outdir string, t *rdl.Type,
+	genAnnotations bool, namespace string, avoidClashing bool) error {
+
 	tName, _, _ := rdl.TypeInfo(t)
 	bt := registry.BaseType(t)
 	switch bt {
@@ -122,6 +132,9 @@ func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegist
 		return nil
 	}
 	cName := utils.Capitalize(string(tName))
+	if (avoidClashing) {
+		cName += "_Pc"
+	}
 	out, file, _, err := utils.OutputWriter(outdir, cName, ".java")
 	if err != nil {
 		return err
@@ -535,7 +548,7 @@ func (gen *javaModelGenerator) generateStruct(t *rdl.Type, cName string, genAnno
 			st := t.StructTypeDef
 			f := utils.FlattenedFields(gen.registry, t)
 			gen.generateTypeComment(t)
-			gen.appendToBody(fmt.Sprintf("public final class %s implements java.io.Serializable {\n", st.Name))
+			gen.appendToBody(fmt.Sprintf("public final class %s implements java.io.Serializable {\n", cName))
 			gen.generateStructFields(f, st.Name, st.Comment, cName, st.Annotations, genAnnotations)
 			if gen.structHasFieldDefault(st) {
 				gen.appendToBody("\n    //\n    // sets up the instance according to its default field values, if any\n    //\n")
