@@ -15,24 +15,31 @@ import (
 	"os"
 	"github.com/yahoo/parsec-rdl-gen/utils"
 	"text/template"
+	"strconv"
 )
 
 type javaClientGenerator struct {
-	registry rdl.TypeRegistry
-	schema   *rdl.Schema
-	name     string
-	writer   *bufio.Writer
-	err      error
-	banner   string
-	ns       string
-	base     string
+	registry   rdl.TypeRegistry
+	schema     *rdl.Schema
+	name       string
+	writer     *bufio.Writer
+	err        error
+	banner     string
+	ns         string
+	base       string
+	isPcSuffix bool
 }
 
 func main() {
 	pOutdir := flag.String("o", ".", "Output directory")
 	flag.String("s", "", "RDL source file")
 	namespace := flag.String("ns", "", "Namespace")
+	pc := flag.String("pc", "false", "add '_Pc' postfix to the generated java class")
 	flag.Parse()
+
+	isPcSuffix, err := strconv.ParseBool(*pc)
+	checkErr(err)
+
 	data, err := ioutil.ReadAll(os.Stdin)
 	banner := "parsec-rdl-gen (development version)"
 
@@ -40,7 +47,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			GenerateJavaClient(banner, &schema, *pOutdir, *namespace, "")
+			GenerateJavaClient(banner, &schema, *pOutdir, *namespace, "", isPcSuffix)
 			os.Exit(0)
 		}
 	}
@@ -48,8 +55,15 @@ func main() {
 	os.Exit(1)
 }
 
+func checkErr(err error) {
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "*** %v\n", err)
+		os.Exit(1)
+	}
+}
+
 // GenerateJavaClient generates the client code to talk to the server
-func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns string, base string) error {
+func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns string, base string, isPcSuffix bool) error {
 
 	reg := rdl.NewTypeRegistry(schema)
 
@@ -64,7 +78,7 @@ func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns str
 	if err != nil {
 		return err
 	}
-	gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
+	gen := &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base, isPcSuffix}
 	gen.processTemplate(javaClientTemplate)
 	out.Flush()
 	file.Close()
@@ -76,7 +90,7 @@ func GenerateJavaClient(banner string, schema *rdl.Schema, outdir string, ns str
 	if err != nil {
 		return err
 	}
-	gen = &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base}
+	gen = &javaClientGenerator{reg, schema, cName, out, nil, banner, ns, base, isPcSuffix}
 	gen.processTemplate(javaClientInterfaceTemplate)
 	out.Flush()
 	file.Close()
@@ -112,14 +126,14 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		return utils.FormatComment(s, 0, 80)
 	}
 	needExpectFunc := func(r *rdl.Resource) bool {
-		if (r.Expected != "OK" || len(r.Alternatives) > 0) {
+		if (r.Expected != "OK") || (len(r.Alternatives) > 0) {
 			return true
 		}
 		return false
 	}
 	needImportHashSetFunc := func(rs []*rdl.Resource) bool {
 		for _,r := range rs {
-			if (needExpectFunc(r)) {
+			if needExpectFunc(r) {
 				return true
 			}
 		}
@@ -154,7 +168,7 @@ func (gen *javaClientGenerator) processTemplate(templateSource string) error {
 		"builderExt":  func(r *rdl.Resource) string { return gen.builderExt(r) },
 		"origPackage": func() string { return utils.JavaGenerationOrigPackage(gen.schema, gen.ns) },
 		"origHeader":  func() string { return utils.JavaGenerationOrigHeader(gen.banner) },
-		"returnType":  func(r *rdl.Resource) string { return utils.JavaType(gen.registry, r.Type, true, "", "")},
+		"returnType":  func(r *rdl.Resource) string { return gen.javaType(gen.registry, r.Type, true, "", "")},
 		"needExpect":  needExpectFunc,
 		"needImportHashSet":  needImportHashSetFunc,
 		"needImportJsonProcessingException": needImportJsonProcessingExceptionFunc,
@@ -393,7 +407,7 @@ func safeTypeVarName(rtype rdl.TypeRef) rdl.TypeName {
 }
 
 // todo: duplicate with server code, need integrate
-func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, needParamWithType bool) (string, []string) {
+func (gen *javaClientGenerator) javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, needParamWithType bool) (string, []string) {
 	var params []string
 	bodyType := string(safeTypeVarName(r.Type))
 	for _, v := range r.Inputs {
@@ -408,7 +422,7 @@ func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, needParamWithType boo
 		}
 		optional := true
 		if (needParamWithType) {
-			params = append(params, utils.JavaType(reg, v.Type, optional, "", "") + " " + javaName(k))
+			params = append(params, gen.javaType(reg, v.Type, optional, "", "") + " " + javaName(k))
 		} else {
 			params = append(params, javaName(k))
 		}
@@ -432,9 +446,8 @@ func javaName(name rdl.Identifier) string {
 
 func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource, needHeader bool) string {
 	reg := gen.registry
-	returnType := utils.JavaType(reg, r.Type, true, "", "")
-	needParamWithType := true
-	methName, params := javaMethodName(reg, r, needParamWithType)
+	returnType := gen.javaType(reg, r.Type, true, "", "")
+	methName, params := gen.javaMethodName(reg, r, true)
 	sparams := ""
 	if (needHeader) {
 		sparams = "Map<String, List<String>> headers"
@@ -450,11 +463,14 @@ func (gen *javaClientGenerator) clientMethodSignature(r *rdl.Resource, needHeade
 
 func (gen *javaClientGenerator) clientMethodOverloadContent(r *rdl.Resource) string {
 	reg := gen.registry
-	needParamWithType := false
-	methName, params := javaMethodName(reg, r, needParamWithType)
+	methName, params := gen.javaMethodName(reg, r, false)
 	paramsWithEmptyMap := "Collections.emptyMap()"
 	if len(params) > 0 {
 		paramsWithEmptyMap = paramsWithEmptyMap + ", " + strings.Join(params, ", ")
 	}
 	return "return " + methName + "(" + paramsWithEmptyMap + ");"
+}
+
+func (gen *javaClientGenerator) javaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) string {
+	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix)
 }

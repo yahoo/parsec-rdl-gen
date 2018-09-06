@@ -31,6 +31,7 @@ const (
 	ValidationGroupsKey           = "groups"
 	ValidationGroupsClass         = "ParsecValidationGroups"
 	ValidationGroupsRegexPattern  = "(^|[ ,])" + ValidationGroupsKey + "\\s?="
+	JavaClassSuffix               = utils.JavaParsecClassSuffix
 )
 
 var (
@@ -46,14 +47,15 @@ var BuildDate string
 var validationGroups map[string]struct{}
 
 type javaModelGenerator struct {
-	registry rdl.TypeRegistry
-	schema   *rdl.Schema
-	name     string
-	writer   *bufio.Writer
-	err      error
-	header   []string
-	imports  []string
-	body     []string
+	registry   rdl.TypeRegistry
+	schema     *rdl.Schema
+	name       string
+	writer     *bufio.Writer
+	err        error
+	header     []string
+	imports    []string
+	body       []string
+	isPcSuffix bool
 }
 
 func main() {
@@ -67,7 +69,8 @@ func main() {
 
 	generateAnnotations, err := strconv.ParseBool(*generateAnnotationsString)
 	checkErr(err)
-	avoidClashing, err := strconv.ParseBool(*pc)
+	isPcSuffix, err := strconv.ParseBool(*pc)
+	checkErr(err)
 
 	var data []byte
 	if *dataFile != "" {
@@ -84,7 +87,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			GenerateJavaModel(banner, &schema, *pOutdir, generateAnnotations, *namespace, avoidClashing)
+			GenerateJavaModel(banner, &schema, *pOutdir, generateAnnotations, *namespace, isPcSuffix)
 			os.Exit(0)
 		}
 	}
@@ -100,7 +103,7 @@ func checkErr(err error) {
 }
 
 // GenerateJavaModel generates the model code for the types defined in the RDL schema.
-func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, namespace string, avoidClashing bool) error {
+func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, namespace string, isPcSuffix bool) error {
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
 		return err
@@ -108,7 +111,7 @@ func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnno
 	validationGroups = make(map[string]struct{}, 0)
 	registry := rdl.NewTypeRegistry(schema)
 	for _, t := range schema.Types {
-		err := generateJavaType(banner, schema, registry, packageDir, t, genAnnotations, namespace, avoidClashing)
+		err := generateJavaType(banner, schema, registry, packageDir, t, genAnnotations, namespace, isPcSuffix)
 		if err != nil {
 			return err
 		}
@@ -118,7 +121,7 @@ func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnno
 }
 
 func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegistry, outdir string, t *rdl.Type,
-	genAnnotations bool, namespace string, avoidClashing bool) error {
+	genAnnotations bool, namespace string, isPcSuffix bool) error {
 
 	tName, _, _ := rdl.TypeInfo(t)
 	bt := registry.BaseType(t)
@@ -132,8 +135,8 @@ func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegist
 		return nil
 	}
 	cName := utils.Capitalize(string(tName))
-	if (avoidClashing) {
-		cName += "_Pc"
+	if isPcSuffix {
+		cName += JavaClassSuffix
 	}
 	out, file, _, err := utils.OutputWriter(outdir, cName, ".java")
 	if err != nil {
@@ -142,7 +145,7 @@ func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegist
 	if file != nil {
 		defer file.Close()
 	}
-	gen := &javaModelGenerator{registry, schema, string(tName), out, nil, nil, nil, nil}
+	gen := &javaModelGenerator{registry, schema, string(tName), out, nil, nil, nil, nil, isPcSuffix}
 	gen.generateHeader(banner, namespace)
 	switch bt {
 	case rdl.BaseTypeStruct:
@@ -288,7 +291,7 @@ func (gen *javaModelGenerator) generateUnion(t *rdl.Type) {
 	gen.appendToBody(fmt.Sprintf("\t%s %sVariantTag\n", s, uName))
 	for _, v := range ut.Variants {
 		uV := utils.Capitalize(string(v))
-		vType := utils.JavaType(gen.registry, v, false, "", "")
+		vType := gen.javaType(gen.registry, v, false, "", "")
 		s := utils.LeftJustified(uV, maxKeyLen)
 		gen.appendToBody(fmt.Sprintf("\t%s *%s\n", s, vType))
 	}
@@ -530,11 +533,11 @@ func (gen *javaModelGenerator) generateArray(t *rdl.Type) {
 		case rdl.TypeVariantArrayTypeDef:
 			at := t.ArrayTypeDef
 			gen.generateTypeComment(t)
-			ftype := utils.JavaType(gen.registry, at.Type, false, at.Items, "")
+			ftype := gen.javaType(gen.registry, at.Type, false, at.Items, "")
 			gen.appendToBody(fmt.Sprintf("type %s %s\n\n", at.Name, ftype))
 		default:
 			tName, tType, _ := rdl.TypeInfo(t)
-			gtype := utils.JavaType(gen.registry, tType, false, "", "")
+			gtype := gen.javaType(gen.registry, tType, false, "", "")
 			gen.generateTypeComment(t)
 			gen.appendToBody(fmt.Sprintf("type %s %s\n\n", tName, gtype))
 		}
@@ -580,6 +583,9 @@ func (gen *javaModelGenerator) generateEnum(t *rdl.Type) {
 	}
 	et := t.EnumTypeDef
 	name := utils.Capitalize(string(et.Name))
+	if (gen.isPcSuffix) {
+		name += JavaClassSuffix
+	}
 	gen.appendToBody(fmt.Sprintf("public enum %s {", name))
 	for i, elem := range et.Elements {
 		sym := elem.Symbol
@@ -627,7 +633,7 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 			fnames = append(fnames, fname)
 			optional := f.Optional
 
-			ftype := utils.JavaType(gen.registry, f.Type, optional, f.Items, f.Keys)
+			ftype := gen.javaType(gen.registry, f.Type, optional, f.Items, f.Keys)
 			ftypes = append(ftypes, ftype)
 
 			gen.appendToBody("    private ")
@@ -703,7 +709,7 @@ func (gen *javaModelGenerator) generateStructFieldType(rdlType rdl.TypeRef, opti
 		gen.generateStructFieldParamType(i, true, "", "")
 		gen.appendToBody(">")
 	default:
-		gen.appendToBody(utils.JavaType(gen.registry, rdlType, optional, items, keys))
+		gen.appendToBody(gen.javaType(gen.registry, rdlType, optional, items, keys))
 	}
 }
 
@@ -893,6 +899,10 @@ func (gen *javaModelGenerator) getValidationGroupValue(annotationValue string) s
 	}
 
 	return strings.TrimRight(outputBuffer.String(), "\n ") + "\n    "
+}
+
+func (gen *javaModelGenerator) javaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) string {
+	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix)
 }
 
 func javaFieldName(n rdl.Identifier) string {
