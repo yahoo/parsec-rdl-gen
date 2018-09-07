@@ -32,7 +32,7 @@ func TestGenerateInterface(test *testing.T) {
 
 	buf := new (bytes.Buffer)
 	writer := bufio.NewWriter(buf)
-	gen := &javaClientGenerator{reg, &schema, cName, writer, nil, "test", "", ""}
+	gen := &javaClientGenerator{reg, &schema, cName, writer, nil, "test", "", "", false}
 	gen.processTemplate(javaClientInterfaceTemplate)
 	writer.Flush()
 	realClientInterface := buf.String()
@@ -61,7 +61,7 @@ func TestGenerateImpl(test *testing.T) {
 
 	buf := new (bytes.Buffer)
 	writer := bufio.NewWriter(buf)
-	gen := &javaClientGenerator{reg, &schema, cName, writer, nil, "test", "", ""}
+	gen := &javaClientGenerator{reg, &schema, cName, writer, nil, "test", "", "", false}
 	gen.processTemplate(javaClientTemplate)
 	writer.Flush()
 	realClientImpl := buf.String()
@@ -90,7 +90,7 @@ func TestGenerateImpl2(test *testing.T) {
 
 	buf := new (bytes.Buffer)
 	writer := bufio.NewWriter(buf)
-	gen := &javaClientGenerator{reg, &schema, cName, writer, nil, "test", "", ""}
+	gen := &javaClientGenerator{reg, &schema, cName, writer, nil, "test", "", "", false}
 	gen.processTemplate(javaClientTemplate)
 	writer.Flush()
 	realClientImpl := buf.String()
@@ -102,7 +102,7 @@ func TestGenerateImpl2(test *testing.T) {
 }
 
 func TestUriConstruct(test *testing.T) {
-	gen := &javaClientGenerator{nil, nil, "", nil, nil, "test", "", ""}
+	gen := &javaClientGenerator{nil, nil, "", nil, nil, "test", "", "", false}
 	inputs := []*rdl.ResourceInput{{Name: "id", PathParam: true}}
 	r := &rdl.Resource{Inputs: inputs}
 	realOut := gen.builderExt(r)

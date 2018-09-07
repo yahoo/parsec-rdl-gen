@@ -192,6 +192,8 @@ public final class ParsecErrorDetail implements java.io.Serializable {
 }
 `
 
+const JavaParsecClassSuffix = "_Pc"
+
 func JavaGenerateResourceException(schema *rdl.Schema, writer io.Writer, namespace string) error {
 	return _javaGenerateTemplate(schema, writer, javaResourceExceptionTemplate, namespace)
 }
@@ -319,7 +321,7 @@ func GetUserDefinedTypeAnnotations(userDefinedType rdl.TypeRef, schemaTypes []*r
 	return make(map[rdl.ExtendedAnnotation]string, 0)
 }
 
-func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) string {
+func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef, isPcSuffix bool) string {
 	t := reg.FindType(rdlType)
 	if t == nil || t.Variant == 0 {
 		panic("Cannot find type '" + rdlType + "'")
@@ -377,7 +379,7 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				i = items
 			}
 		}
-		gitems := JavaType(reg, i, true, "", "")
+		gitems := JavaType(reg, i, true, "", "", isPcSuffix)
 		//return gitems + "[]" //if arrays, not lists
 		return "List<" + gitems + ">"
 	case rdl.BaseTypeMap:
@@ -395,8 +397,8 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				i = items
 			}
 		}
-		gkeys := JavaType(reg, k, true, "", "")
-		gitems := JavaType(reg, i, true, "", "")
+		gkeys := JavaType(reg, k, true, "", "", isPcSuffix)
+		gitems := JavaType(reg, i, true, "", "", isPcSuffix)
 		return "Map<" + gkeys + "," + gitems + ">"
 	case rdl.BaseTypeStruct:
 		switch t.Variant {
@@ -405,8 +407,16 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				return "Object"
 			}
 		}
-		return string(rdlType)
+		javaType := string(rdlType)
+		if isPcSuffix {
+			javaType += JavaParsecClassSuffix
+		}
+		return javaType
 	default:
-		return string(rdlType)
+		javaType := string(rdlType)
+		if isPcSuffix {
+			javaType += JavaParsecClassSuffix
+		}
+		return javaType
 	}
 }
