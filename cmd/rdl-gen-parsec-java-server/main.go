@@ -155,7 +155,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 			for _, t := range schema.Types {
 				tName, tType, _ := rdl.TypeInfo(t)
 				if strings.ToLower(string(tType)) == "struct" || strings.ToLower(string(tType)) == "enum" {
-					gen.appendImportClass(packageName + "." + string(tName))
+					gen.appendImportClass(packageName + "." + string(tName) + utils.JavaParsecClassSuffix)
 				}
 			}
 			gen.appendImportClass(packageName + ".ResourceContext")
