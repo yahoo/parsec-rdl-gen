@@ -16,8 +16,8 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -33,7 +33,7 @@ func main() {
 	apiHost := flag.String("t", "", "The host serving the API")
 	flag.Parse()
 
-	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
+	genParsecError, err := strconv.ParseBool(*genParsecErrorString)
 	checkErr(err)
 
 	data, err := ioutil.ReadAll(os.Stdin)
@@ -162,8 +162,17 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 				action = new(SwaggerAction)
 			}
 			action.Summary = r.Comment
-			tag := string(r.Type)       //fixme: RDL has no tags, the type is actually too fine grain for this
-			action.Tags = []string{tag} //multiple tags include the resource in multiple sections
+			var tags []string
+			for e := range r.Annotations {
+				str := string(e)
+				if strings.HasPrefix(str, "x_tag_") {
+					tags = append(tags, str[6:])
+				}
+			}
+			if len(tags) == 0 {
+				tags = append(tags, string(r.Type))
+			}
+			action.Tags = tags
 			action.Produces = []string{"application/json"}
 			var ins []*SwaggerParameter
 			if len(r.Inputs) > 0 {
@@ -318,7 +327,7 @@ func addSwaggerResponse(reg rdl.TypeRegistry, responses map[string]*SwaggerRespo
 		schema = new(SwaggerType)
 		schema.Type = ptype
 		schema.Format = pformat
-		if (pswaggerType != nil) {
+		if pswaggerType != nil {
 			schema.Ref = pswaggerType.Ref
 		}
 	}
@@ -390,14 +399,14 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						case "Int32", "Int64", "Int16":
 							items.Type = "integer"
 							items.Format = strings.ToLower(fItems)
-							if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+							if example, err := strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
 								items.Example = 0
 							}
 						case "Bool":
 							items.Type = "boolean"
-							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+							if example, err := strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
 								items.Example = false
@@ -413,14 +422,14 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 				case rdl.BaseTypeInt32, rdl.BaseTypeInt64, rdl.BaseTypeInt16:
 					prop.Type = "integer"
 					prop.Format = strings.ToLower(fbt.String())
-					if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+					if example, err := strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
 						prop.Example = example
 					} else {
 						prop.Example = 0
 					}
 				case rdl.BaseTypeBool:
 					prop.Type = "boolean"
-					if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+					if example, err := strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 						prop.Example = example
 					} else {
 						prop.Example = false
@@ -439,14 +448,14 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						case "Int32", "Int64", "Int16":
 							items.Type = "integer"
 							items.Format = strings.ToLower(fItems)
-							if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+							if example, err := strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
 								items.Example = 0
 							}
 						case "Bool":
 							items.Type = "boolean"
-							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+							if example, err := strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
 								items.Example = false
@@ -510,8 +519,8 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 
 // SwaggerDoc is a representation of the top level object in swagger 2.0
 type SwaggerDoc struct {
-	Swagger string       `json:"swagger"`
-	Info    *SwaggerInfo `json:"info"`
+	Swagger     string                               `json:"swagger"`
+	Info        *SwaggerInfo                         `json:"info"`
 	Host        string                               `json:"host,omitempty" rdl:"optional"`
 	BasePath    string                               `json:"basePath"`
 	Schemes     []string                             `json:"schemes"`
