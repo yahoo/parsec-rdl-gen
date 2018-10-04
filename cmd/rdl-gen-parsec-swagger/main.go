@@ -12,6 +12,7 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ardielle/ardielle-go/rdl"
+	"github.com/iancoleman/orderedmap"
 	"github.com/yahoo/parsec-rdl-gen/utils"
 	"io/ioutil"
 	"net/http"
@@ -261,17 +262,17 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 }
 
 func genResourceError(defs map[string]*SwaggerType) {
-	props := make(map[string]*SwaggerType)
+	props := orderedmap.New()
 	codeType := new(SwaggerType)
 	t := "integer"
 	codeType.Type = t
 	f := "int32"
 	codeType.Format = f
-	props["code"] = codeType
+	props.Set("code", codeType)
 	msgType := new(SwaggerType)
 	t2 := "string"
 	msgType.Type = t2
-	props["message"] = msgType
+	props.Set("message", msgType)
 	prop := new(SwaggerType)
 	prop.Required = []string{"code", "message"}
 	prop.Properties = props
@@ -285,9 +286,9 @@ func addParsecError(defs map[string]*SwaggerType) {
 	msgType := new(SwaggerType)
 	msgType.Type = "string"
 
-	errDetail := make(map[string]*SwaggerType)
-	errDetail["message"] = msgType
-	errDetail["invalidValue"] = msgType
+	errDetail := orderedmap.New()
+	errDetail.Set("message", msgType)
+	errDetail.Set("invalidValue", msgType)
 	errDetailProp := new(SwaggerType)
 	errDetailProp.Required = []string{"message"}
 	errDetailProp.Properties = errDetail
@@ -298,18 +299,18 @@ func addParsecError(defs map[string]*SwaggerType) {
 	refErrDetailsProp.Type = "array"
 	refErrDetailsProp.Items = refErrDetailProp
 
-	errBody := make(map[string]*SwaggerType)
-	errBody["code"] = codeType
-	errBody["message"] = msgType
-	errBody["detail"] = refErrDetailsProp
+	errBody := orderedmap.New()
+	errBody.Set("code", codeType)
+	errBody.Set("message", msgType)
+	errBody.Set("detail", refErrDetailsProp)
 	errBodyProp := new(SwaggerType)
 	errBodyProp.Required = []string{"message"}
 	errBodyProp.Properties = errBody
 	refErrBodyProp := new(SwaggerType)
 	refErrBodyProp.Ref = "#/definitions/ParsecErrorBody"
 
-	parsecErr := make(map[string]*SwaggerType)
-	parsecErr["error"] = refErrBodyProp
+	parsecErr := orderedmap.New()
+	parsecErr.Set("error", refErrBodyProp)
 	parsecErrProp := new(SwaggerType)
 	parsecErrProp.Required = []string{"error"}
 	parsecErrProp.Properties = parsecErr
@@ -371,7 +372,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 	case rdl.TypeVariantStructTypeDef:
 		typedef := t.StructTypeDef
 		st.Description = typedef.Comment
-		props := make(map[string]*SwaggerType)
+		props := orderedmap.New()
 		var required []string
 		fields := utils.FlattenedFields(reg, t)
 		if len(fields) > 0 {
@@ -469,7 +470,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 					prop.Type = "_" + string(f.Type) + "_" //!
 					prop.Example = f.Annotations[ExampleAnnotationKey]
 				}
-				props[string(f.Name)] = prop
+				props.Set(string(f.Name), prop)
 			}
 		}
 		st.Properties = props
@@ -586,17 +587,17 @@ type SwaggerResponse struct {
 
 // SwaggerType -
 type SwaggerType struct {
-	Properties           map[string]*SwaggerType `json:"properties,omitempty"`
-	Required             []string                `json:"required,omitempty"`
-	Type                 string                  `json:"type,omitempty"`
-	Format               string                  `json:"format,omitempty"`
-	Pattern              string                  `json:"pattern,omitempty"`
-	Description          string                  `json:"description,omitempty"`
-	Items                *SwaggerType            `json:"items,omitempty"`
-	Ref                  string                  `json:"$ref,omitempty"`
-	Enum                 []string                `json:"enum,omitempty"`
-	AdditionalProperties *SwaggerType            `json:"additionalProperties,omitempty"`
-	Example              interface{}             `json:"example,omitempty"`
+	Properties           *orderedmap.OrderedMap `json:"properties,omitempty"`
+	Required             []string               `json:"required,omitempty"`
+	Type                 string                 `json:"type,omitempty"`
+	Format               string                 `json:"format,omitempty"`
+	Pattern              string                 `json:"pattern,omitempty"`
+	Description          string                 `json:"description,omitempty"`
+	Items                *SwaggerType           `json:"items,omitempty"`
+	Ref                  string                 `json:"$ref,omitempty"`
+	Enum                 []string               `json:"enum,omitempty"`
+	AdditionalProperties *SwaggerType           `json:"additionalProperties,omitempty"`
+	Example              interface{}            `json:"example,omitempty"`
 }
 
 /*
