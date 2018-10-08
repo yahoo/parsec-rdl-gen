@@ -479,7 +479,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 		}
 	case rdl.TypeVariantArrayTypeDef:
 		typedef := t.ArrayTypeDef
-		st.Type = bt.String()
+		st.Type = strings.ToLower(bt.String())
 		if typedef.Items != "Any" {
 			tItems := string(typedef.Items)
 			items := new(SwaggerType)
