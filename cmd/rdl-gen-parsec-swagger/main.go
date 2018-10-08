@@ -206,8 +206,9 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 					param.Schema = ref
 					if in.Default != nil {
 						param.Default = in.Default
-					} else if in.Annotations[ExampleAnnotationKey] != "" {
-						param.Default = in.Annotations[ExampleAnnotationKey]
+					}
+					if in.Annotations[ExampleAnnotationKey] != "" {
+						param.Example = in.Annotations[ExampleAnnotationKey]
 					}
 					ins = append(ins, param)
 				}
@@ -577,6 +578,7 @@ type SwaggerParameter struct {
 	Description string       `json:"description,omitempty"`
 	Required    bool         `json:"required"`
 	Default     interface{}  `json:"default,omitempty"`
+	Example     string       `json:"example,omitempty"`
 }
 
 // SwaggerResponse -
