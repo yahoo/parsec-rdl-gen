@@ -112,14 +112,14 @@
                     "type": "integer",
                     "format": "int32"
                 },
+                "message": {
+                    "type": "string"
+                },
                 "detail": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/ParsecErrorDetail"
                     }
-                },
-                "message": {
-                    "type": "string"
                 }
             },
             "required": [
@@ -128,10 +128,10 @@
         },
         "ParsecErrorDetail": {
             "properties": {
-                "invalidValue": {
+                "message": {
                     "type": "string"
                 },
-                "message": {
+                "invalidValue": {
                     "type": "string"
                 }
             },
@@ -160,17 +160,24 @@
         },
         "Request": {
             "properties": {
-                "reqNum": {
-                    "type": "integer",
-                    "format": "int32",
-                    "example": 0
+                "reqProperty": {
+                    "$ref": "#/definitions/Property"
                 },
-                "reqNums": {
+                "reqProperties": {
                     "type": "array",
                     "items": {
-                        "type": "integer",
-                        "format": "int32",
-                        "example": 0
+                        "$ref": "#/definitions/Property"
+                    }
+                },
+                "reqUserId": {
+                    "type": "string",
+                    "example": ""
+                },
+                "reqUserIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "example": ""
                     }
                 },
                 "reqOrder": {
@@ -181,15 +188,6 @@
                     "items": {
                         "$ref": "#/definitions/Order"
                     }
-                },
-                "reqProperties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Property"
-                    }
-                },
-                "reqProperty": {
-                    "$ref": "#/definitions/Property"
                 },
                 "reqRecommendFuture": {
                     "type": "boolean",
@@ -202,15 +200,17 @@
                         "example": false
                     }
                 },
-                "reqUserId": {
-                    "type": "string",
-                    "example": ""
+                "reqNum": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 0
                 },
-                "reqUserIds": {
+                "reqNums": {
                     "type": "array",
                     "items": {
-                        "type": "string",
-                        "example": ""
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
                     }
                 }
             },
@@ -244,17 +244,24 @@
         },
         "Response": {
             "properties": {
-                "respNum": {
-                    "type": "integer",
-                    "format": "int32",
-                    "example": 0
+                "respProperty": {
+                    "$ref": "#/definitions/Property"
                 },
-                "respNums": {
+                "respProperties": {
                     "type": "array",
                     "items": {
-                        "type": "integer",
-                        "format": "int32",
-                        "example": 0
+                        "$ref": "#/definitions/Property"
+                    }
+                },
+                "respUserId": {
+                    "type": "string",
+                    "example": ""
+                },
+                "respUserIds": {
+                    "type": "array",
+                    "items": {
+                        "type": "string",
+                        "example": ""
                     }
                 },
                 "respOrder": {
@@ -265,15 +272,6 @@
                     "items": {
                         "$ref": "#/definitions/Order"
                     }
-                },
-                "respProperties": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/Property"
-                    }
-                },
-                "respProperty": {
-                    "$ref": "#/definitions/Property"
                 },
                 "respRecommendFuture": {
                     "type": "boolean",
@@ -286,15 +284,17 @@
                         "example": false
                     }
                 },
-                "respUserId": {
-                    "type": "string",
-                    "example": ""
+                "respNum": {
+                    "type": "integer",
+                    "format": "int32",
+                    "example": 0
                 },
-                "respUserIds": {
+                "respNums": {
                     "type": "array",
                     "items": {
-                        "type": "string",
-                        "example": ""
+                        "type": "integer",
+                        "format": "int32",
+                        "example": 0
                     }
                 }
             },

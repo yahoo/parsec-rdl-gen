@@ -12,12 +12,13 @@ import (
 	"flag"
 	"fmt"
 	"github.com/ardielle/ardielle-go/rdl"
+	"github.com/iancoleman/orderedmap"
 	"github.com/yahoo/parsec-rdl-gen/utils"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 )
 
 const (
@@ -33,7 +34,7 @@ func main() {
 	apiHost := flag.String("t", "", "The host serving the API")
 	flag.Parse()
 
-	genParsecError, err:= strconv.ParseBool(*genParsecErrorString)
+	genParsecError, err := strconv.ParseBool(*genParsecErrorString)
 	checkErr(err)
 
 	data, err := ioutil.ReadAll(os.Stdin)
@@ -162,8 +163,17 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 				action = new(SwaggerAction)
 			}
 			action.Summary = r.Comment
-			tag := string(r.Type)       //fixme: RDL has no tags, the type is actually too fine grain for this
-			action.Tags = []string{tag} //multiple tags include the resource in multiple sections
+			var tags []string
+			for e := range r.Annotations {
+				str := string(e)
+				if strings.HasPrefix(str, "x_tag_") {
+					tags = append(tags, str[6:])
+				}
+			}
+			if len(tags) == 0 {
+				tags = append(tags, string(r.Type))
+			}
+			action.Tags = tags
 			action.Produces = []string{"application/json"}
 			var ins []*SwaggerParameter
 			if len(r.Inputs) > 0 {
@@ -196,8 +206,9 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 					param.Schema = ref
 					if in.Default != nil {
 						param.Default = in.Default
-					} else if in.Annotations[ExampleAnnotationKey] != "" {
-						param.Default = in.Annotations[ExampleAnnotationKey]
+					}
+					if in.Annotations[ExampleAnnotationKey] != "" {
+						param.Example = in.Annotations[ExampleAnnotationKey]
 					}
 					ins = append(ins, param)
 				}
@@ -252,17 +263,17 @@ func swagger(schema *rdl.Schema, genParsecError bool, swaggerScheme string, fina
 }
 
 func genResourceError(defs map[string]*SwaggerType) {
-	props := make(map[string]*SwaggerType)
+	props := orderedmap.New()
 	codeType := new(SwaggerType)
 	t := "integer"
 	codeType.Type = t
 	f := "int32"
 	codeType.Format = f
-	props["code"] = codeType
+	props.Set("code", codeType)
 	msgType := new(SwaggerType)
 	t2 := "string"
 	msgType.Type = t2
-	props["message"] = msgType
+	props.Set("message", msgType)
 	prop := new(SwaggerType)
 	prop.Required = []string{"code", "message"}
 	prop.Properties = props
@@ -276,9 +287,9 @@ func addParsecError(defs map[string]*SwaggerType) {
 	msgType := new(SwaggerType)
 	msgType.Type = "string"
 
-	errDetail := make(map[string]*SwaggerType)
-	errDetail["message"] = msgType
-	errDetail["invalidValue"] = msgType
+	errDetail := orderedmap.New()
+	errDetail.Set("message", msgType)
+	errDetail.Set("invalidValue", msgType)
 	errDetailProp := new(SwaggerType)
 	errDetailProp.Required = []string{"message"}
 	errDetailProp.Properties = errDetail
@@ -289,18 +300,18 @@ func addParsecError(defs map[string]*SwaggerType) {
 	refErrDetailsProp.Type = "array"
 	refErrDetailsProp.Items = refErrDetailProp
 
-	errBody := make(map[string]*SwaggerType)
-	errBody["code"] = codeType
-	errBody["message"] = msgType
-	errBody["detail"] = refErrDetailsProp
+	errBody := orderedmap.New()
+	errBody.Set("code", codeType)
+	errBody.Set("message", msgType)
+	errBody.Set("detail", refErrDetailsProp)
 	errBodyProp := new(SwaggerType)
 	errBodyProp.Required = []string{"message"}
 	errBodyProp.Properties = errBody
 	refErrBodyProp := new(SwaggerType)
 	refErrBodyProp.Ref = "#/definitions/ParsecErrorBody"
 
-	parsecErr := make(map[string]*SwaggerType)
-	parsecErr["error"] = refErrBodyProp
+	parsecErr := orderedmap.New()
+	parsecErr.Set("error", refErrBodyProp)
 	parsecErrProp := new(SwaggerType)
 	parsecErrProp.Required = []string{"error"}
 	parsecErrProp.Properties = parsecErr
@@ -318,7 +329,7 @@ func addSwaggerResponse(reg rdl.TypeRegistry, responses map[string]*SwaggerRespo
 		schema = new(SwaggerType)
 		schema.Type = ptype
 		schema.Format = pformat
-		if (pswaggerType != nil) {
+		if pswaggerType != nil {
 			schema.Ref = pswaggerType.Ref
 		}
 	}
@@ -362,7 +373,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 	case rdl.TypeVariantStructTypeDef:
 		typedef := t.StructTypeDef
 		st.Description = typedef.Comment
-		props := make(map[string]*SwaggerType)
+		props := orderedmap.New()
 		var required []string
 		fields := utils.FlattenedFields(reg, t)
 		if len(fields) > 0 {
@@ -390,14 +401,14 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						case "Int32", "Int64", "Int16":
 							items.Type = "integer"
 							items.Format = strings.ToLower(fItems)
-							if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+							if example, err := strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
 								items.Example = 0
 							}
 						case "Bool":
 							items.Type = "boolean"
-							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+							if example, err := strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
 								items.Example = false
@@ -413,14 +424,14 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 				case rdl.BaseTypeInt32, rdl.BaseTypeInt64, rdl.BaseTypeInt16:
 					prop.Type = "integer"
 					prop.Format = strings.ToLower(fbt.String())
-					if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+					if example, err := strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
 						prop.Example = example
 					} else {
 						prop.Example = 0
 					}
 				case rdl.BaseTypeBool:
 					prop.Type = "boolean"
-					if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+					if example, err := strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 						prop.Example = example
 					} else {
 						prop.Example = false
@@ -439,14 +450,14 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 						case "Int32", "Int64", "Int16":
 							items.Type = "integer"
 							items.Format = strings.ToLower(fItems)
-							if example, err:= strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
+							if example, err := strconv.Atoi(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
 								items.Example = 0
 							}
 						case "Bool":
 							items.Type = "boolean"
-							if example, err:= strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
+							if example, err := strconv.ParseBool(f.Annotations[ExampleAnnotationKey]); err == nil {
 								items.Example = example
 							} else {
 								items.Example = false
@@ -460,7 +471,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 					prop.Type = "_" + string(f.Type) + "_" //!
 					prop.Example = f.Annotations[ExampleAnnotationKey]
 				}
-				props[string(f.Name)] = prop
+				props.Set(string(f.Name), prop)
 			}
 		}
 		st.Properties = props
@@ -469,7 +480,7 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 		}
 	case rdl.TypeVariantArrayTypeDef:
 		typedef := t.ArrayTypeDef
-		st.Type = bt.String()
+		st.Type = strings.ToLower(bt.String())
 		if typedef.Items != "Any" {
 			tItems := string(typedef.Items)
 			items := new(SwaggerType)
@@ -510,8 +521,8 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 
 // SwaggerDoc is a representation of the top level object in swagger 2.0
 type SwaggerDoc struct {
-	Swagger string       `json:"swagger"`
-	Info    *SwaggerInfo `json:"info"`
+	Swagger     string                               `json:"swagger"`
+	Info        *SwaggerInfo                         `json:"info"`
 	Host        string                               `json:"host,omitempty" rdl:"optional"`
 	BasePath    string                               `json:"basePath"`
 	Schemes     []string                             `json:"schemes"`
@@ -567,6 +578,7 @@ type SwaggerParameter struct {
 	Description string       `json:"description,omitempty"`
 	Required    bool         `json:"required"`
 	Default     interface{}  `json:"default,omitempty"`
+	Example     string       `json:"example,omitempty"`
 }
 
 // SwaggerResponse -
@@ -577,17 +589,17 @@ type SwaggerResponse struct {
 
 // SwaggerType -
 type SwaggerType struct {
-	Properties           map[string]*SwaggerType `json:"properties,omitempty"`
-	Required             []string                `json:"required,omitempty"`
-	Type                 string                  `json:"type,omitempty"`
-	Format               string                  `json:"format,omitempty"`
-	Pattern              string                  `json:"pattern,omitempty"`
-	Description          string                  `json:"description,omitempty"`
-	Items                *SwaggerType            `json:"items,omitempty"`
-	Ref                  string                  `json:"$ref,omitempty"`
-	Enum                 []string                `json:"enum,omitempty"`
-	AdditionalProperties *SwaggerType            `json:"additionalProperties,omitempty"`
-	Example              interface{}             `json:"example,omitempty"`
+	Properties           *orderedmap.OrderedMap `json:"properties,omitempty"`
+	Required             []string               `json:"required,omitempty"`
+	Type                 string                 `json:"type,omitempty"`
+	Format               string                 `json:"format,omitempty"`
+	Pattern              string                 `json:"pattern,omitempty"`
+	Description          string                 `json:"description,omitempty"`
+	Items                *SwaggerType           `json:"items,omitempty"`
+	Ref                  string                 `json:"$ref,omitempty"`
+	Enum                 []string               `json:"enum,omitempty"`
+	AdditionalProperties *SwaggerType           `json:"additionalProperties,omitempty"`
+	Example              interface{}            `json:"example,omitempty"`
 }
 
 /*
