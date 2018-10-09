@@ -68,14 +68,14 @@
                     "type": "integer",
                     "format": "int32"
                 },
+                "message": {
+                    "type": "string"
+                },
                 "detail": {
                     "type": "array",
                     "items": {
                         "$ref": "#/definitions/ParsecErrorDetail"
                     }
-                },
-                "message": {
-                    "type": "string"
                 }
             },
             "required": [
@@ -84,10 +84,10 @@
         },
         "ParsecErrorDetail": {
             "properties": {
-                "invalidValue": {
+                "message": {
                     "type": "string"
                 },
-                "message": {
+                "invalidValue": {
                     "type": "string"
                 }
             },
