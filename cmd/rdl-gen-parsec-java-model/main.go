@@ -34,6 +34,11 @@ const (
 	JavaClassSuffix               = utils.JavaParsecClassSuffix
 )
 
+const (
+	UpperFirstNamingStyle = "upper_first"
+	JavaBeanNamingStyle   = "java_bean"
+)
+
 var (
 	validationGroupsRegex = regexp.MustCompile(ValidationGroupsRegexPattern)
 )
@@ -56,6 +61,7 @@ type javaModelGenerator struct {
 	imports    []string
 	body       []string
 	isPcSuffix bool
+	namingStyle string
 }
 
 func main() {
@@ -65,6 +71,7 @@ func main() {
 	namespace := flag.String("ns", "", "Namespace")
 	dataFile := flag.String("df", "", "JSON representation of the schema file")
 	pc := flag.String("pc", "false", "add '_Pc' postfix to the generated java class")
+    namgingStyle := flag.String("namingStyle", UpperFirstNamingStyle, "getter/setter use java bean naming convection")
 	flag.Parse()
 
 	generateAnnotations, err := strconv.ParseBool(*generateAnnotationsString)
@@ -87,7 +94,7 @@ func main() {
 		var schema rdl.Schema
 		err = json.Unmarshal(data, &schema)
 		if err == nil {
-			GenerateJavaModel(banner, &schema, *pOutdir, generateAnnotations, *namespace, isPcSuffix)
+			GenerateJavaModel(banner, &schema, *pOutdir, generateAnnotations, *namespace, isPcSuffix, *namgingStyle)
 			os.Exit(0)
 		}
 	}
@@ -103,7 +110,7 @@ func checkErr(err error) {
 }
 
 // GenerateJavaModel generates the model code for the types defined in the RDL schema.
-func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, namespace string, isPcSuffix bool) error {
+func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnnotations bool, namespace string, isPcSuffix bool, namingStyle string) error {
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
 		return err
@@ -111,7 +118,7 @@ func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnno
 	validationGroups = make(map[string]struct{}, 0)
 	registry := rdl.NewTypeRegistry(schema)
 	for _, t := range schema.Types {
-		err := generateJavaType(banner, schema, registry, packageDir, t, genAnnotations, namespace, isPcSuffix)
+		err := generateJavaType(banner, schema, registry, packageDir, t, genAnnotations, namespace, isPcSuffix, namingStyle)
 		if err != nil {
 			return err
 		}
@@ -121,7 +128,7 @@ func GenerateJavaModel(banner string, schema *rdl.Schema, outdir string, genAnno
 }
 
 func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegistry, outdir string, t *rdl.Type,
-	genAnnotations bool, namespace string, isPcSuffix bool) error {
+	genAnnotations bool, namespace string, isPcSuffix bool, namingStyle string) error {
 
 	tName, _, _ := rdl.TypeInfo(t)
 	bt := registry.BaseType(t)
@@ -145,7 +152,7 @@ func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegist
 	if file != nil {
 		defer file.Close()
 	}
-	gen := &javaModelGenerator{registry, schema, string(tName), out, nil, nil, nil, nil, isPcSuffix}
+	gen := &javaModelGenerator{registry, schema, string(tName), out, nil, nil, nil, nil, isPcSuffix, namingStyle}
 	gen.generateHeader(banner, namespace)
 	switch bt {
 	case rdl.BaseTypeStruct:
@@ -654,7 +661,12 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 			if genAnnotations {
 				gen.generateStructFieldGetterAnnotations(fannotations[i])
 			}
-			gen.appendToBody(fmt.Sprintf("    public %s get%s() { return %s; }\n", ftype, upperFirst(fname), fname))
+			switch gen.namingStyle {
+			case JavaBeanNamingStyle:
+				gen.appendToBody(fmt.Sprintf("    public %s get%s() { return %s; }\n", ftype, javaBeanStyle(fname), fname))
+			default:
+				gen.appendToBody(fmt.Sprintf("    public %s get%s() { return %s; }\n", ftype, upperFirst(fname), fname))
+			}
 		}
 		gen.appendToBody("\n")
 		for i := range fields {
@@ -663,7 +675,12 @@ func (gen *javaModelGenerator) generateStructFields(fields []*rdl.StructFieldDef
 			if genAnnotations {
 				gen.generateStructFieldSetterAnnotations(fannotations[i])
 			}
-			gen.appendToBody(fmt.Sprintf("    public %s set%s(%s %s) { this.%s = %s; return this; }\n", cName, upperFirst(fname), ftype, fname, fname, fname))
+			switch gen.namingStyle {
+			case JavaBeanNamingStyle:
+				gen.appendToBody(fmt.Sprintf("    public %s set%s(%s %s) { this.%s = %s; return this; }\n", cName, javaBeanStyle(fname), ftype, fname, fname, fname))
+			default:
+				gen.appendToBody(fmt.Sprintf("    public %s set%s(%s %s) { this.%s = %s; return this; }\n", cName, upperFirst(fname), ftype, fname, fname, fname))
+			}
 		}
 	}
 }
@@ -855,6 +872,18 @@ func upperFirst(s string) string {
 	}
 	r, n := utf8.DecodeRuneInString(s)
 	return string(unicode.ToUpper(r)) + s[n:]
+}
+
+func javaBeanStyle(s string) string {
+	if s == "" {
+		return ""
+	}
+	r0, n0 := utf8.DecodeRuneInString(s)
+	r1, _ := utf8.DecodeRuneInString(s[n0:])
+	if (r1 != utf8.RuneError && unicode.IsLower(r0) && unicode.IsUpper(r1)) {
+		return s;
+	}
+	return string(unicode.ToUpper(r0)) + s[n0:]
 }
 
 func (gen *javaModelGenerator) getValidationGroupValue(annotationValue string) string {
