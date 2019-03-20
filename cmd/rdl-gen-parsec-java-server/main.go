@@ -1120,6 +1120,8 @@ func (gen *javaServerGenerator) extendedValueAnnotation(annotations map[rdl.Exte
 			buffer.WriteString(generateAnnotation("@ValidCurrency", value))
 		case "language_tag":
 			buffer.WriteString(generateAnnotation("@LanguageTag", value))
+		case "timezone":
+			buffer.WriteString(generateAnnotation("@ValidTimeZone", value))
 		case "named":
 			buffer.WriteString(generateAnnotation("@Named", fmt.Sprintf("\"%s\"", value)))
 		case "date_time":
@@ -1160,15 +1162,17 @@ func (gen *javaServerGenerator) generateImportClass(r *rdl.Resource) {
 			case "null":
 				gen.appendImportClass(JavaxConstraintPackage + ".Null")
 			case "not_blank":
-				gen.appendImportClass(HibernateConstraintPackage + ".NotBlank")
+				gen.appendImportClass(JavaxConstraintPackage + ".NotBlank")
 			case "not_empty":
-				gen.appendImportClass(HibernateConstraintPackage + ".NotEmpty")
+				gen.appendImportClass(JavaxConstraintPackage + ".NotEmpty")
 			case "country_code":
 				gen.appendImportClass(ParsecConstraintPackage + ".CountryCode")
 			case "currency":
 				gen.appendImportClass(ParsecConstraintPackage + ".ValidCurrency")
 			case "language_tag":
 				gen.appendImportClass(ParsecConstraintPackage + ".LanguageTag")
+			case "timezone":
+				gen.appendImportClass(ParsecConstraintPackage + ".ValidTimeZone")
 			case "named":
 				gen.appendImportClass(JavaxInjectPackage + ".Named")
 			case "date_time":
