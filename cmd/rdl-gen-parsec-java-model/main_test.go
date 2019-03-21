@@ -46,8 +46,8 @@ func TestGenerateStructFields(t *testing.T) {
 		gen := javaModelGenerator{}
 		gen.generateStructFields(senario.fields, senario.name, senario.comment,
 			senario.cName, senario.annotations, senario.genAnnotations)
-		assert.Equal(t, gen.body, senario.body)
-		assert.Equal(t, gen.imports, senario.imports)
+		assert.Equal(t, senario.body, gen.body)
+		assert.Equal(t, senario.imports, gen.imports)
 	}
 }
 
@@ -94,8 +94,8 @@ func TestGenerateStructFieldType(t *testing.T) {
 			registry: registry,
 		}
 		gen.generateStructFieldType(senario.rdlType, senario.optional, senario.items, senario.keys)
-		assert.Equal(t, strings.Join(gen.body, ""), senario.body)
-		assert.Equal(t, strings.Join(gen.imports, ""), senario.imports)
+		assert.Equal(t, senario.body, strings.Join(gen.body, ""))
+		assert.Equal(t, senario.imports, strings.Join(gen.imports, ""))
 	}
 }
 
@@ -149,8 +149,8 @@ func TestGenerateStructFieldParamType(t *testing.T) {
 			registry: registry,
 		}
 		gen.generateStructFieldParamType(senario.rdlType, senario.optional, senario.items, senario.keys)
-		assert.Equal(t, strings.Join(gen.body, ""), senario.body)
-		assert.Equal(t, strings.Join(gen.imports, ""), senario.imports)
+		assert.Equal(t, senario.body, strings.Join(gen.body, ""))
+		assert.Equal(t, senario.imports, strings.Join(gen.imports, ""))
 	}
 }
 
@@ -172,8 +172,8 @@ func TestGenerateValidationGroupAnnotation(t *testing.T) {
 		{"x_name", "value", "@XmlElement(name=\"value\")", "import javax.xml.bind.annotation.XmlElement;\n"},
 		{"x_not_null", "value", "@NotNull(value)", "import javax.validation.constraints.NotNull;\n"},
 		{"x_null", "value", "@Null(value)", "import javax.validation.constraints.Null;\n"},
-		{"x_not_blank", "value", "@NotBlank(value)", "import org.hibernate.validator.constraints.NotBlank;\n"},
-		{"x_not_empty", "value", "@NotEmpty(value)", "import org.hibernate.validator.constraints.NotEmpty;\n"},
+		{"x_not_blank", "value", "@NotBlank(value)", "import javax.validation.constraints.NotBlank;\n"},
+		{"x_not_empty", "value", "@NotEmpty(value)", "import javax.validation.constraints.NotEmpty;\n"},
 		{"x_country_code", "value", "@CountryCode", "import com.yahoo.parsec.constraint.validators.CountryCode;\n"},
 		{"x_currency", "value", "@ValidCurrency", "import com.yahoo.parsec.constraint.validators.ValidCurrency;\n"},
 		{"x_language_tag", "value", "@LanguageTag", "import com.yahoo.parsec.constraint.validators.LanguageTag;\n"},
@@ -192,8 +192,8 @@ func TestGenerateValidationGroupAnnotation(t *testing.T) {
 		validationGroups = make(map[string]struct{}, 0)
 		gen := javaModelGenerator{}
 		gen.generateValidationGroupAnnotation(senario.key, senario.value)
-		assert.Equal(t, strings.Join(gen.body, ""), senario.body)
-		assert.Equal(t, strings.Join(gen.imports, ""), senario.imports)
+		assert.Equal(t, senario.body, strings.Join(gen.body, ""))
+		assert.Equal(t, senario.imports, strings.Join(gen.imports, ""))
 	}
 }
 
@@ -203,10 +203,8 @@ func TestGenerateStructFieldGetterAnnotations(t *testing.T) {
 	}
 	gen := javaModelGenerator{}
 	gen.generateStructFieldGetterAnnotations(annotations)
-	assert.Equal(t, strings.Join(gen.body, ""),
-		"\n    @XmlElement(name=\"value\")\n")
-	assert.Equal(t, strings.Join(gen.imports, ""),
-		"import javax.xml.bind.annotation.XmlElement;\n")
+	assert.Equal(t, "\n    @XmlElement(name=\"value\")\n", strings.Join(gen.body, ""))
+	assert.Equal(t,"import javax.xml.bind.annotation.XmlElement;\n", strings.Join(gen.imports, ""))
 }
 
 func TestGenerateStructFieldSetterAnnotations(t *testing.T) {
@@ -215,14 +213,12 @@ func TestGenerateStructFieldSetterAnnotations(t *testing.T) {
 	}
 	gen := javaModelGenerator{}
 	gen.generateStructFieldSetterAnnotations(annotations)
-	assert.Equal(t, strings.Join(gen.body, ""),
-		"\n    @XmlElement(name=\"value\")\n")
-	assert.Equal(t, strings.Join(gen.imports, ""),
-		"import javax.xml.bind.annotation.XmlElement;\n")
+	assert.Equal(t, "\n    @XmlElement(name=\"value\")\n", strings.Join(gen.body, ""))
+	assert.Equal(t, "import javax.xml.bind.annotation.XmlElement;\n", strings.Join(gen.imports, ""))
 }
 
 func TestAppendAnnotation(t *testing.T) {
 	gen := javaModelGenerator{}
 	gen.appendAnnotation("key", "value")
-	assert.Equal(t, strings.Join(gen.body, ""), "key(value)")
+	assert.Equal(t, "key(value)", strings.Join(gen.body, ""))
 }
