@@ -781,10 +781,10 @@ func (gen *javaModelGenerator) generateValidationGroupAnnotation(extendedKey rdl
 		gen.appendImportClass(JavaxConstraintPackage + ".Null")
 	case "not_blank":
 		gen.appendAnnotation("@NotBlank", value)
-		gen.appendImportClass(HibernateConstraintPackage + ".NotBlank")
+		gen.appendImportClass(JavaxConstraintPackage + ".NotBlank")
 	case "not_empty":
 		gen.appendAnnotation("@NotEmpty", value)
-		gen.appendImportClass(HibernateConstraintPackage + ".NotEmpty")
+		gen.appendImportClass(JavaxConstraintPackage + ".NotEmpty")
 	case "country_code":
 		gen.appendAnnotation("@CountryCode", "")
 		gen.appendImportClass(ParsecConstraintPackage + ".CountryCode")
