@@ -460,6 +460,7 @@ package {{package}};
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.ws.rs.container.AsyncResponse;
+import java.util.List;
 
 //
 // {{cName}}Handler is the interface that the service implementation must implement
@@ -475,6 +476,7 @@ package {{origPackage}};
 {{classImports}}
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import java.util.List;
 
 /**
  * {{cName}}HandlerImpl is interface implementation that implement {{cName}}Handler interface.
