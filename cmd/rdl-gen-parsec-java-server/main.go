@@ -476,7 +476,6 @@ package {{origPackage}};
 {{classImports}}
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.List;
 
 /**
  * {{cName}}HandlerImpl is interface implementation that implement {{cName}}Handler interface.
@@ -704,6 +703,7 @@ import javax.ws.rs.container.Suspended;
 import java.io.IOException;
 import java.util.Map;
 import java.util.Arrays;
+import java.util.List;
 import java.util.LinkedHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1038,7 +1038,14 @@ func (gen *javaServerGenerator) handlerSignature(r *rdl.Resource) string {
 		} else {
 			pdecl = gen.extendedValueAnnotation(v.Annotations)
 		}
-		ptype := gen.javaType(reg, v.Type, true, "", "")
+
+		ptype := ""
+		bt := reg.FindType(v.Type)
+		if v.QueryParam != "" && reg.BaseType(bt) == rdl.BaseTypeArray {
+		    ptype = gen.generateStructFieldType(v.Type, r)
+		} else {
+		    ptype = gen.javaType(reg, v.Type, true, "", "")
+		}
 		params = append(params, "\n        "+pdecl+ptype+" "+javaName(k))
 	}
 	spec := ""
@@ -1291,4 +1298,15 @@ func javaName(name rdl.Identifier) string {
 	default:
 		return string(name)
 	}
+}
+
+func (gen *javaServerGenerator) generateStructFieldType(rdlType rdl.TypeRef, r *rdl.Resource) string {
+	t := gen.registry.FindType(rdlType)
+	subItems := t.ArrayTypeDef.Items
+	annotations := utils.GetUserDefinedTypeAnnotations(subItems, gen.schema.Types)
+	pdecl := ""
+	if len(annotations) > 0 {
+		pdecl = gen.extendedValueAnnotation(annotations)
+	}
+	return "List<" + pdecl + gen.javaType(gen.registry, subItems, true, "", "") + ">"
 }
