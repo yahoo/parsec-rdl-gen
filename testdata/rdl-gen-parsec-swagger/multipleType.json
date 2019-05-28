@@ -43,6 +43,14 @@
             }
         },
         {
+            "MapTypeDef": {
+                "type": "Map",
+                "name": "ResizedImageMap",
+                "keys": "String",
+                "items": "String"
+            }
+        },
+        {
             "StructTypeDef": {
                 "type": "Struct",
                 "name": "Response",
@@ -98,6 +106,11 @@
                         "name": "respNums",
                         "type": "Array",
                         "items": "Int32"
+                    },
+                    {
+                        "name": "resizedImages",
+                        "type": "Array",
+                        "items": "ResizedImageMap"
                     }
                 ]
             }
