@@ -227,6 +227,12 @@
                 "reqNums"
             ]
         },
+        "ResizedImageMap": {
+            "type": "object",
+            "additionalProperties": {
+                "type": "string"
+            }
+        },
         "ResourceError": {
             "properties": {
                 "code": {
@@ -296,6 +302,12 @@
                         "format": "int32",
                         "example": 0
                     }
+                },
+                "resizedImages": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/ResizedImageMap"
+                    }
                 }
             },
             "required": [
@@ -308,7 +320,8 @@
                 "respRecommendFuture",
                 "respRecommendFutures",
                 "respNum",
-                "respNums"
+                "respNums",
+                "resizedImages"
             ]
         }
     }

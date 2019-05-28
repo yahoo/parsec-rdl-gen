@@ -13,6 +13,8 @@ type Order struct (x_object) {
     string name;
 }
 
+type ResizedImageMap Map<String,String>;
+
 type Response struct {
     Property respProperty (x_not_null);
 
@@ -33,6 +35,8 @@ type Response struct {
     int32 respNum;
 
     array<int32> respNums;
+
+    array<ResizedImageMap> resizedImages;
 }
 
 

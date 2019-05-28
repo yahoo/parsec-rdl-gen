@@ -497,6 +497,23 @@ func makeSwaggerTypeDef(reg rdl.TypeRegistry, t *rdl.Type) *SwaggerType {
 			}
 			st.Items = items
 		}
+	case rdl.TypeVariantMapTypeDef:
+		typedef := t.MapTypeDef
+		st.Type = "object"
+		if typedef.Items != "Any" {
+			tItems := string(typedef.Items)
+			items := new(SwaggerType)
+			switch reg.FindBaseType(typedef.Items) {
+			case rdl.BaseTypeString:
+				items.Type = strings.ToLower(tItems)
+			case rdl.BaseTypeInt32, rdl.BaseTypeInt64, rdl.BaseTypeInt16:
+				items.Type = "integer"
+				items.Format = strings.ToLower(tItems)
+			default:
+				items.Ref = "#/definitions/" + tItems
+			}
+			st.AdditionalProperties = items
+		}
 	case rdl.TypeVariantEnumTypeDef:
 		typedef := t.EnumTypeDef
 		var tmp []string
