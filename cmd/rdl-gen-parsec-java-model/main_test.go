@@ -23,6 +23,7 @@ var (
 				},
 			},
 		},
+		Version: func(i int32) *int32 { return &i }(1),
 	}
 	registry = rdl.NewTypeRegistry(schema)
 )

@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"strconv"
 )
 
 
@@ -321,7 +322,15 @@ func GetUserDefinedTypeAnnotations(userDefinedType rdl.TypeRef, schemaTypes []*r
 	return make(map[rdl.ExtendedAnnotation]string, 0)
 }
 
-func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef, isPcSuffix bool) string {
+func JavaType(
+	reg rdl.TypeRegistry,
+	rdlType rdl.TypeRef,
+	optional bool,
+	items rdl.TypeRef,
+	keys rdl.TypeRef,
+	isPcSuffix bool,
+	apiVer int32) string {
+
 	t := reg.FindType(rdlType)
 	if t == nil || t.Variant == 0 {
 		panic("Cannot find type '" + rdlType + "'")
@@ -379,7 +388,7 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				i = items
 			}
 		}
-		gitems := JavaType(reg, i, true, "", "", isPcSuffix)
+		gitems := JavaType(reg, i, true, "", "", isPcSuffix, apiVer)
 		//return gitems + "[]" //if arrays, not lists
 		return "List<" + gitems + ">"
 	case rdl.BaseTypeMap:
@@ -397,8 +406,8 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 				i = items
 			}
 		}
-		gkeys := JavaType(reg, k, true, "", "", isPcSuffix)
-		gitems := JavaType(reg, i, true, "", "", isPcSuffix)
+		gkeys := JavaType(reg, k, true, "", "", isPcSuffix, apiVer)
+		gitems := JavaType(reg, i, true, "", "", isPcSuffix, apiVer)
 		return "Map<" + gkeys + "," + gitems + ">"
 	case rdl.BaseTypeStruct:
 		switch t.Variant {
@@ -408,12 +417,18 @@ func JavaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rd
 			}
 		}
 		javaType := string(rdlType)
+		if apiVer > 1 {
+			javaType += "V" + strconv.Itoa(int(apiVer))
+		}
 		if isPcSuffix {
 			javaType += JavaParsecClassSuffix
 		}
 		return javaType
 	default:
 		javaType := string(rdlType)
+		if apiVer > 1 {
+			javaType += "V" + strconv.Itoa(int(apiVer))
+		}
 		if isPcSuffix {
 			javaType += JavaParsecClassSuffix
 		}

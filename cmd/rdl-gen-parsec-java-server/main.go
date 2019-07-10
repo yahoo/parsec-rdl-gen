@@ -112,6 +112,10 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 		return err
 	}
 	cName := utils.Capitalize(string(schema.Name))
+	ver := *schema.Version
+	if ver > 1 { // if rdl version > 1, we append V{version} in class name
+	    cName += "V" + strconv.Itoa(int(ver))
+	}
 
 	//FooHandler interface
 	out, file, _, err := utils.OutputWriter(packageDir, cName, "Handler.java")
@@ -125,9 +129,9 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 
 	for _, r := range schema.Resources {
 		if r.Async != nil && *r.Async {
-			javaServerMakeAsyncResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace, isPcSuffix)
+			javaServerMakeAsyncResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace, isPcSuffix, ver)
 		} else if len(r.Outputs) > 0 {
-			javaServerMakeResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace, isPcSuffix)
+			javaServerMakeResultModel(banner, schema, reg, outdir, r, genAnnotations, genUsingPath, namespace, isPcSuffix, ver)
 		}
 	}
 
@@ -151,11 +155,15 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 			gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, isPcSuffix}
 			packageName := utils.JavaGenerationPackage(schema, namespace)
 
+			ver := *schema.Version
 			// import user defined struct classes
 			for _, t := range schema.Types {
 				tName, tType, _ := rdl.TypeInfo(t)
 				if strings.ToLower(string(tType)) == "struct" || strings.ToLower(string(tType)) == "enum" {
 					importClass := packageName + "." + string(tName)
+					if ver > 1 {
+						importClass += "V" + strconv.Itoa(int(ver))
+					}
 					if isPcSuffix {
 						importClass += utils.JavaParsecClassSuffix
 					}
@@ -278,13 +286,13 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	return err
 }
 
-func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string, isPcSuffix bool) error {
+func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string, isPcSuffix bool, apiVer int32) error {
 	cName := utils.Capitalize(string(r.Type))
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
 		return err
 	}
-	methName, _ := javaMethodName(reg, r, genUsingPath, isPcSuffix)
+	methName, _ := javaMethodName(reg, r, genUsingPath, isPcSuffix, apiVer)
 	s := utils.Capitalize(methName) + "Result"
 	out, file, _, err := utils.OutputWriter(packageDir, s, ".java")
 	if err != nil {
@@ -314,14 +322,14 @@ func javaServerMakeAsyncResultModel(banner string, schema *rdl.Schema, reg rdl.T
 	return err
 }
 
-func javaServerMakeResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string, isPcSuffix bool) error {
+func javaServerMakeResultModel(banner string, schema *rdl.Schema, reg rdl.TypeRegistry, outdir string, r *rdl.Resource, genAnnotations bool, genUsingPath bool, namespace string, isPcSuffix bool, apiVer int32) error {
 	rType := string(r.Type)
 	cName := utils.Capitalize(rType)
 	packageDir, err := utils.JavaGenerationDir(outdir, schema, namespace)
 	if err != nil {
 		return err
 	}
-	methName, _ := javaMethodName(reg, r, genUsingPath, isPcSuffix)
+	methName, _ := javaMethodName(reg, r, genUsingPath, isPcSuffix, apiVer)
 	s := utils.Capitalize(methName) + "Result"
 	out, file, _, err := utils.OutputWriter(packageDir, s, ".java")
 	if err != nil {
@@ -795,7 +803,7 @@ func (gen *javaServerGenerator) makeJavaTypeRef(reg rdl.TypeRegistry, t *rdl.Typ
 }
 
 func (gen *javaServerGenerator) javaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) string {
-	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix)
+	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix, *gen.schema.Version)
 }
 
 func (gen *javaServerGenerator) processTemplate(templateSource string) error {
@@ -915,7 +923,7 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 			fargs = append(fargs, bodyName)
 		}
 	}
-	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix)
+	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix, *gen.schema.Version)
 	sargs := ""
 	if len(fargs) > 0 {
 		sargs = ", " + strings.Join(fargs, ", ")
@@ -1062,7 +1070,7 @@ func (gen *javaServerGenerator) handlerSignature(r *rdl.Resource) string {
 			spec += "    @Consumes(\"application/json;charset=utf-8\")\n"
 		}
 	}
-	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix)
+	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix, *gen.schema.Version)
 	return spec + "    public " + returnType + " " + methName + "(" + strings.Join(params, ", ") + "\n    )"
 }
 
@@ -1231,7 +1239,7 @@ func (gen *javaServerGenerator) serverMethodSignature(r *rdl.Resource) string {
 	returnType := gen.javaType(reg, r.Type, false, "", "")
 	//noContent := r.Expected == "NO_CONTENT" && r.Alternatives == nil
 	//FIX: if nocontent, return nothing, have a void result, and don't "@Produces" anything
-	methName, params := javaMethodName(reg, r, gen.genUsingPath, gen.isPcSuffix)
+	methName, params := javaMethodName(reg, r, gen.genUsingPath, gen.isPcSuffix, *gen.schema.Version)
 	sparams := ""
 	if len(params) > 0 {
 		sparams = ", " + strings.Join(params, ", ")
@@ -1245,7 +1253,7 @@ func (gen *javaServerGenerator) serverMethodSignature(r *rdl.Resource) string {
 	return "public " + returnType + " " + methName + "(ResourceContext context" + sparams + ")"
 }
 
-func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, usePath bool, isPcSuffix bool) (string, []string) {
+func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, usePath bool, isPcSuffix bool, apiVer int32) (string, []string) {
 	var params []string
 	bodyType := r.Type
 	for _, v := range r.Inputs {
@@ -1259,7 +1267,7 @@ func javaMethodName(reg rdl.TypeRegistry, r *rdl.Resource, usePath bool, isPcSuf
 		}
 		//rest_core always uses the boxed type
 		optional := true
-		params = append(params, utils.JavaType(reg, v.Type, optional, "", "", isPcSuffix)+" "+javaName(k))
+		params = append(params, utils.JavaType(reg, v.Type, optional, "", "", isPcSuffix, apiVer)+" "+javaName(k))
 	}
 	if r.Name != "" {
 		return utils.Uncapitalize(string(r.Name)), params
