@@ -1,4 +1,4 @@
-# parsec-rdl-gen [![Build Status](https://travis-ci.org/yahoo/parsec-rdl-gen.svg?branch=master)](https://travis-ci.org/yahoo/parsec-rdl-gen)
+# parsec-rdl-gen [![Build Status](https://app.travis-ci.com/yahoo/parsec-rdl-gen.svg?branch=master)](https://app.travis-ci.com/yahoo/parsec-rdl-gen)
 
 Parsec Ardielle (RDL) External Generators
 
