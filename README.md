@@ -27,7 +27,7 @@ go get github.com/yahoo/parsec-rdl-gen/...
 Then GO will checkout the source code to $GOPATH/src/github.com/yahoo/parsec-rdl-gen/, this should be /Users/guang001/Documents/workspace/go/src/github.com/yahoo/parsec-rdl-gen/ in my case, and 'go get' command will build the binary after the fetch code, the binary would be put in $GOPATH/bin/ path. The detail you could reference [How to Write Go Code](https://golang.org/doc/code.html).
 
 So, to build the parsec-rdl-gen, you only need execute: 'go get github.com/yahoo/parsec-rdl-gen/...' if you are ready the GO enviroment. If you need switch the git branch, you could:
-```
+``` 
 cd /Users/guang001/Documents/workspace/go/src/github.com/yahoo/parsec-rdl-gen/
 git checkout -b dev
 ```
