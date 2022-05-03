@@ -4,16 +4,18 @@ env:
     secure: "SBywbZBz6OTn7PF4rnfcJeIAsiDNa1ZVj23h/KLSP+0evJ71UU9yihpjvonP3ESsHX8BoUWAuwKdsj+ktpCtk9wRoS19plnJ7I27oTVk6DlOZw7h3gvYbjzNfs6PJD8QgKD8F4SBnaPScdyuRjrE5JR0hN6kZe3nAE2qjYDQiSHhDyKvlrDddTNkyVFZezktTZlo/bbJ4ZLkbh3NLaBaveNZKQduxp2aZmIRz4mQzlDoHtHOzxyiTbxRzWhuo/nr6QQIiizxpWAzQ4BmE/GevaXcb53GDSYV7GfPYq2J9nZe/chI3Qe7vU3to8zEI5LLVYfO5/XU0JIsNh9Dyu+NAUXqH+AZNpPwfVnkt0J+P3kQNwtNxEpbNqiKqViObLj1Q6rl5CcFc1gzOT53pf6flAFqgCeiMWBhbKY2LY1EaTOUhrKqFSVkAEdCNdxk/6d2/GsIQQnpq5509hp8CSaovT5BCnaSWteWRpomFgMkFoZ2lzSnkA4m69TjNu4RLACbUkcmmhszswgPU8slfY+HVIsOPGcSIZPfA/kF6t3l59lgAsPr9J7lNBvfemarbtvEoQv4EsxAQpc8qJnZgR0vFJQiQ/MaztmH/Awr8PfcGy84B7z8u0Q1Fv7rbeZWo64eAoBA5Sk2+88KCzynbGNt1niE2eACN57hubxtlBC5vqg="
 
 go:
-  - "1.13.x"
+  - "1.16.x"
 
 install:
   - GOOS=darwin GOARCH=amd64 go get -x -t -v ./...
+  - GOOS=darwin GOARCH=arm64 go get -x -t -v ./...
   - GOOS=linux GOARCH=amd64 go get -x -t -v ./...
 
 before_deploy:
   - for i in $GOPATH/bin/rdl-gen-parsec* ;do cp $i $i-linux;done
   - for i in $GOPATH/bin/darwin_amd64/rdl-gen-parsec*;do cp $i $GOPATH/bin/`basename $i`-darwin;done
-  - zip -j rdl-gen.zip $GOPATH/bin/rdl-gen-parsec*-{darwin,linux}
+  - for i in $GOPATH/bin/darwin_arm64/rdl-gen-parsec*;do cp $i $GOPATH/bin/`basename $i`-darwin-arm;done
+  - zip -j rdl-gen.zip $GOPATH/bin/rdl-gen-parsec*-{darwin,linux,darwin-arm}
   - git config --global user.email "builds@travis-ci.com"
   - git config --global user.name "Travis CI"
   - git tag v0.1.$TRAVIS_BUILD_NUMBER -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
