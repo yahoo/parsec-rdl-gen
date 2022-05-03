@@ -2,6 +2,7 @@ language: go
 env:
   global:
     secure: "NsbPsieJoBXvzLwx6XYffg4/80nRqhV5dHZUP8mRTMkmndfuR+r5iY4Os7QYxzYC88i4bx8rh0yOIOtfzGuLnvnuQRMAGXBLekpw/r2kYX9Tgn879DGxu9IG1b0Z1wJmUu4tflNLNSfjn0pxYsI+jWpmHuRTpNeyCit92iSvvMDOKvJsvMncMFEy/sLDVZ1ij7w48RhSLO9IvA4SVUYt9D42VaHcJ05IGdGlFvuoJQWJvckAqVqTMNnLil6QVBZ5AgrcC8BCaafGFkFK/uqgZPRNIbFFcFXFtOBYGLV6H31HJGo9eD17E2QtUtQvBHBi8MmI8cvV9QdpL2WzviZuxBrJEH6Dob4xZNEH44rFP1wfGT97kaBAOLhPoO9TU5AfzTaVg5vvhcTSw9cbcb9jqli7j8sfUPVW8c6yk5loYa4YbKGVKmlwLPCgeT+3pqTo78Uaz1mqg83gg3UZkzou0UMHfN8K87AWrcqB8jeLp2gSk3NwGLVPmLaklQPlY746XKvz4zH0exuCpyUGG3Bq6Fo2Cb9Wg0WZwoNDP6Hw8epvsIcItN8kIFTgiHbq2RBzCWNBS2ZgsAYX+oFAwiAwBzN5nTqmaVv/M6lAfQpMkJtQLZ2G+D1vENiPOxI/U8s8lmQj/6zoQoB6mZbLTN92tJv5wi0PS25mHKW8JCvrY8Q="
+    secure: "SBywbZBz6OTn7PF4rnfcJeIAsiDNa1ZVj23h/KLSP+0evJ71UU9yihpjvonP3ESsHX8BoUWAuwKdsj+ktpCtk9wRoS19plnJ7I27oTVk6DlOZw7h3gvYbjzNfs6PJD8QgKD8F4SBnaPScdyuRjrE5JR0hN6kZe3nAE2qjYDQiSHhDyKvlrDddTNkyVFZezktTZlo/bbJ4ZLkbh3NLaBaveNZKQduxp2aZmIRz4mQzlDoHtHOzxyiTbxRzWhuo/nr6QQIiizxpWAzQ4BmE/GevaXcb53GDSYV7GfPYq2J9nZe/chI3Qe7vU3to8zEI5LLVYfO5/XU0JIsNh9Dyu+NAUXqH+AZNpPwfVnkt0J+P3kQNwtNxEpbNqiKqViObLj1Q6rl5CcFc1gzOT53pf6flAFqgCeiMWBhbKY2LY1EaTOUhrKqFSVkAEdCNdxk/6d2/GsIQQnpq5509hp8CSaovT5BCnaSWteWRpomFgMkFoZ2lzSnkA4m69TjNu4RLACbUkcmmhszswgPU8slfY+HVIsOPGcSIZPfA/kF6t3l59lgAsPr9J7lNBvfemarbtvEoQv4EsxAQpc8qJnZgR0vFJQiQ/MaztmH/Awr8PfcGy84B7z8u0Q1Fv7rbeZWo64eAoBA5Sk2+88KCzynbGNt1niE2eACN57hubxtlBC5vqg="
 
 go:
   - "1.13.x"
@@ -17,7 +18,7 @@ before_deploy:
   - git config --global user.email "builds@travis-ci.com"
   - git config --global user.name "Travis CI"
   - git tag v0.1.$TRAVIS_BUILD_NUMBER -m "Generated tag from TravisCI for build $TRAVIS_BUILD_NUMBER"
-  - git push -q https://$GITHUBKEY@github.com/yahoo/parsec-rdl-gen --tags
+  - git push -q https://chinkong83:$GITHUBPAT@github.com/yahoo/parsec-rdl-gen --tags
 
 deploy:
   provider: releases
