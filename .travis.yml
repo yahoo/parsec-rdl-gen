@@ -3,6 +3,9 @@ env:
   global:
     secure: "NsbPsieJoBXvzLwx6XYffg4/80nRqhV5dHZUP8mRTMkmndfuR+r5iY4Os7QYxzYC88i4bx8rh0yOIOtfzGuLnvnuQRMAGXBLekpw/r2kYX9Tgn879DGxu9IG1b0Z1wJmUu4tflNLNSfjn0pxYsI+jWpmHuRTpNeyCit92iSvvMDOKvJsvMncMFEy/sLDVZ1ij7w48RhSLO9IvA4SVUYt9D42VaHcJ05IGdGlFvuoJQWJvckAqVqTMNnLil6QVBZ5AgrcC8BCaafGFkFK/uqgZPRNIbFFcFXFtOBYGLV6H31HJGo9eD17E2QtUtQvBHBi8MmI8cvV9QdpL2WzviZuxBrJEH6Dob4xZNEH44rFP1wfGT97kaBAOLhPoO9TU5AfzTaVg5vvhcTSw9cbcb9jqli7j8sfUPVW8c6yk5loYa4YbKGVKmlwLPCgeT+3pqTo78Uaz1mqg83gg3UZkzou0UMHfN8K87AWrcqB8jeLp2gSk3NwGLVPmLaklQPlY746XKvz4zH0exuCpyUGG3Bq6Fo2Cb9Wg0WZwoNDP6Hw8epvsIcItN8kIFTgiHbq2RBzCWNBS2ZgsAYX+oFAwiAwBzN5nTqmaVv/M6lAfQpMkJtQLZ2G+D1vENiPOxI/U8s8lmQj/6zoQoB6mZbLTN92tJv5wi0PS25mHKW8JCvrY8Q="
 
+go:
+  - "1.13.x"
+
 install:
   - GOOS=darwin GOARCH=amd64 go get -x -t -v ./...
   - GOOS=linux GOARCH=amd64 go get -x -t -v ./...
