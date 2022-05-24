@@ -142,10 +142,14 @@ func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegist
 		return nil
 	}
 	cName := utils.Capitalize(string(tName))
-	ver := *schema.Version
+
+	ver, err := utils.GetSchemaVersionOrDefault(schema, 1)
+	checkErr(err)
+
 	if ver > 1 {
 		cName += "V" + strconv.Itoa(int(ver))
 	}
+
 	if isPcSuffix {
 		cName += JavaClassSuffix
 	}
@@ -594,7 +598,9 @@ func (gen *javaModelGenerator) generateEnum(t *rdl.Type) {
 	}
 	et := t.EnumTypeDef
 	name := utils.Capitalize(string(et.Name))
-	ver := *gen.schema.Version
+	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
+	checkErr(err)
+
 	if ver > 1 {
 		name += "V" + strconv.Itoa(int(ver))
 	}
@@ -939,7 +945,9 @@ func (gen *javaModelGenerator) getValidationGroupValue(annotationValue string) s
 }
 
 func (gen *javaModelGenerator) javaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) string {
-	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix, *gen.schema.Version)
+	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
+	checkErr(err)
+	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix, ver)
 }
 
 func javaFieldName(n rdl.Identifier) string {

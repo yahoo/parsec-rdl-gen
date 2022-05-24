@@ -11,3 +11,4 @@ target/
 tests/generated/
 *.iml
 *.rdl
+!testdata/*.rdl

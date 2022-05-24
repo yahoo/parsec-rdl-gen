@@ -113,3 +113,21 @@ func TestUriConstruct(test *testing.T) {
 			realOut, expectedOut)
 	}
 }
+
+func TestGenerateClientWithoutVersion(t *testing.T) {
+	schema, err := rdl.ParseRDLFile("../../testdata/sample.rdl", false, false, false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	err = GenerateJavaClient("withoutVersion", schema, ".", string(schema.Namespace), "", false)
+	assert.Nil(t, err)
+}
+
+func TestGenerateClientWithVersion(t *testing.T) {
+	schema, err := rdl.ParseRDLFile("../../testdata/sampleV2.rdl", false, false, false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	err = GenerateJavaClient("withVersion", schema, ".", string(schema.Namespace), "", false)
+	assert.Nil(t, err)
+}

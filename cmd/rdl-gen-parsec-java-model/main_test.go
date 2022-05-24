@@ -223,3 +223,23 @@ func TestAppendAnnotation(t *testing.T) {
 	gen.appendAnnotation("key", "value")
 	assert.Equal(t, "key(value)", strings.Join(gen.body, ""))
 }
+
+func TestGenerateModelWithoutVersion(t *testing.T) {
+	schema, err := rdl.ParseRDLFile("../../testdata/sample.rdl", false, false, false)
+
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	err = GenerateJavaModel("withoutVersion", schema, ".", true, "", false, "upper_first")
+	assert.Nil(t, err)
+
+}
+func TestGenerateModelWithVersion(t *testing.T) {
+	schema, err := rdl.ParseRDLFile("../../testdata/sampleV2.rdl", false, false, false)
+
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	err = GenerateJavaModel("withVersion", schema, ".", true, "", false, "upper_first")
+	assert.Nil(t, err)
+}
