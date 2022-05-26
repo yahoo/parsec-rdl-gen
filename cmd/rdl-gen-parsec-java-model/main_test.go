@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"strings"
 	"testing"
 
@@ -225,21 +226,56 @@ func TestAppendAnnotation(t *testing.T) {
 }
 
 func TestGenerateModelWithoutVersion(t *testing.T) {
-	schema, err := rdl.ParseRDLFile("../../testdata/sample.rdl", false, false, false)
+	testOutputDir := "."
+	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
+	// delete the output folder before test
+	os.RemoveAll(testOutputDir + "/com")
 
+	//generate output result
+	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithoutVersion.rdl", false, false, false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	err = GenerateJavaModel("withoutVersion", schema, ".", true, "", false, "upper_first")
-	assert.Nil(t, err)
+	GenerateJavaModel("withoutVersion", schema, testOutputDir, true, "", false, "upper_first")
 
+	//asserts
+	content := checkAndGetFileContent(t, path, "User.java")
+	assert.Contains(t, string(content), "class User")
+
+	// clean up folder
+	os.RemoveAll(testOutputDir + "/com")
 }
-func TestGenerateModelWithVersion(t *testing.T) {
-	schema, err := rdl.ParseRDLFile("../../testdata/sampleV2.rdl", false, false, false)
 
+func TestGenerateModelWithVersion(t *testing.T) {
+	testOutputDir := "."
+	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
+	// delete the output folder before test
+	os.RemoveAll(testOutputDir + "/com")
+
+	//generate output result
+	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithVersion.rdl", false, false, false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	err = GenerateJavaModel("withVersion", schema, ".", true, "", false, "upper_first")
-	assert.Nil(t, err)
+	GenerateJavaModel("withVersion", schema, testOutputDir, true, "", false, "upper_first")
+
+	//asserts
+	content := checkAndGetFileContent(t, path, "UserV2.java")
+	assert.Contains(t, string(content), "class UserV2")
+
+	// clean up folder
+	os.RemoveAll(testOutputDir + "/com")
+}
+
+func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
+	//1. check correspanding client file exists
+	if _, err := os.Stat(path + fileName); err != nil {
+		t.Fatalf("file not exists: %s", path+fileName)
+	}
+	//2. check file content
+	content, err := os.ReadFile(path + fileName)
+	if err != nil {
+		t.Fatalf("can not read file: %s", path+fileName)
+	}
+	return content
 }

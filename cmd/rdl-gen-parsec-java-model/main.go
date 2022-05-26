@@ -142,14 +142,12 @@ func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegist
 		return nil
 	}
 	cName := utils.Capitalize(string(tName))
-
 	ver, err := utils.GetSchemaVersionOrDefault(schema, 1)
 	checkErr(err)
 
 	if ver > 1 {
 		cName += "V" + strconv.Itoa(int(ver))
 	}
-
 	if isPcSuffix {
 		cName += JavaClassSuffix
 	}

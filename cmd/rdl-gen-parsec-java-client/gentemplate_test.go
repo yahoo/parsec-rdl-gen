@@ -4,14 +4,15 @@
 package main
 
 import (
-	"testing"
-	"io/ioutil"
-	"encoding/json"
-	"github.com/ardielle/ardielle-go/rdl"
-	"github.com/yahoo/parsec-rdl-gen/utils"
 	"bufio"
 	"bytes"
+	"encoding/json"
+	"github.com/ardielle/ardielle-go/rdl"
+	"github.com/stretchr/testify/assert"
+	"github.com/yahoo/parsec-rdl-gen/utils"
+	"io/ioutil"
 	"os"
+	"testing"
 )
 
 func TestGenerateInterface(test *testing.T) {
@@ -115,19 +116,66 @@ func TestUriConstruct(test *testing.T) {
 }
 
 func TestGenerateClientWithoutVersion(t *testing.T) {
-	schema, err := rdl.ParseRDLFile("../../testdata/sample.rdl", false, false, false)
+	testOutputDir := "."
+	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
+	// delete the output folder before test
+	os.RemoveAll(testOutputDir + "/com")
+
+	//generate output result
+	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithoutVersion.rdl", false, false, false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	err = GenerateJavaClient("withoutVersion", schema, ".", string(schema.Namespace), "", false)
-	assert.Nil(t, err)
+	GenerateJavaClient("withoutVersion", schema, testOutputDir, string(schema.Namespace), "", false)
+
+	//asserts
+	clientContent := checkAndGetFileContent(t, path, "SampleClient.java")
+	assert.Contains(t, string(clientContent), "CompletableFuture<User>")
+	assert.Contains(t, string(clientContent), "postUser(User")
+
+	clientImplContent := checkAndGetFileContent(t, path, "SampleClientImpl.java")
+	assert.Contains(t, string(clientImplContent), "CompletableFuture<User>")
+	assert.Contains(t, string(clientImplContent), "postUser(User")
+
+	// clean up folder
+	os.RemoveAll(testOutputDir + "/com")
 }
 
 func TestGenerateClientWithVersion(t *testing.T) {
-	schema, err := rdl.ParseRDLFile("../../testdata/sampleV2.rdl", false, false, false)
+	testOutputDir := "."
+	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
+	// delete the output folder before test
+	os.RemoveAll(testOutputDir + "/com")
+
+	//generate output result
+	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithVersion.rdl", false, false, false)
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
-	err = GenerateJavaClient("withVersion", schema, ".", string(schema.Namespace), "", false)
-	assert.Nil(t, err)
+	GenerateJavaClient("withVersion", schema, testOutputDir, string(schema.Namespace), "", false)
+
+	//asserts
+	clientContent := checkAndGetFileContent(t, path, "SampleClient.java")
+	assert.Contains(t, string(clientContent), "CompletableFuture<UserV2>")
+	assert.Contains(t, string(clientContent), "postUser(UserV2")
+
+	clientImplContent := checkAndGetFileContent(t, path, "SampleClientImpl.java")
+	assert.Contains(t, string(clientImplContent), "CompletableFuture<UserV2>")
+	assert.Contains(t, string(clientImplContent), "postUser(UserV2")
+
+	// clean up folder
+	os.RemoveAll(testOutputDir + "/com")
+}
+
+func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
+	//1. check correspanding client file exists
+	if _, err := os.Stat(path + fileName); err != nil {
+		t.Fatalf("file not exists: %s", path+fileName)
+	}
+	//2. check file content
+	content, err := os.ReadFile(path + fileName)
+	if err != nil {
+		t.Fatalf("can not read file: %s", path+fileName)
+	}
+	return content
 }

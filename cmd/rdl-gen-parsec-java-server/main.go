@@ -112,7 +112,6 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 		return err
 	}
 	cName := utils.Capitalize(string(schema.Name))
-
 	ver, err := utils.GetSchemaVersionOrDefault(schema, 1)
 	checkErr(err)
 
@@ -930,7 +929,6 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 			fargs = append(fargs, bodyName)
 		}
 	}
-
 	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
 	checkErr(err)
 	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix, ver)
@@ -1254,7 +1252,6 @@ func (gen *javaServerGenerator) serverMethodSignature(r *rdl.Resource) string {
 	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
 	checkErr(err)
 	methName, params := javaMethodName(reg, r, gen.genUsingPath, gen.isPcSuffix, ver)
-
 	sparams := ""
 	if len(params) > 0 {
 		sparams = ", " + strings.Join(params, ", ")
