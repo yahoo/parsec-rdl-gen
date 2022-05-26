@@ -116,7 +116,7 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	checkErr(err)
 
 	if ver > 1 { // if rdl version > 1, we append V{version} in class name
-		cName += "V" + strconv.Itoa(int(ver))
+	    cName += "V" + strconv.Itoa(int(ver))
 	}
 
 	//FooHandler interface
