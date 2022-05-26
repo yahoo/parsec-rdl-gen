@@ -4,15 +4,15 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
+	"testing"
+	"io/ioutil"
 	"encoding/json"
 	"github.com/ardielle/ardielle-go/rdl"
 	"github.com/stretchr/testify/assert"
 	"github.com/yahoo/parsec-rdl-gen/utils"
-	"io/ioutil"
+	"bufio"
+	"bytes"
 	"os"
-	"testing"
 )
 
 func TestGenerateInterface(test *testing.T) {
@@ -116,10 +116,8 @@ func TestUriConstruct(test *testing.T) {
 }
 
 func TestGenerateClientWithoutVersion(t *testing.T) {
-	testOutputDir := "."
+	testOutputDir := getTempDir(t, ".", "testOutput-")
 	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
-	// delete the output folder before test
-	os.RemoveAll(testOutputDir + "/com")
 
 	//generate output result
 	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithoutVersion.rdl", false, false, false)
@@ -137,15 +135,15 @@ func TestGenerateClientWithoutVersion(t *testing.T) {
 	assert.Contains(t, string(clientImplContent), "CompletableFuture<User>")
 	assert.Contains(t, string(clientImplContent), "postUser(User")
 
-	// clean up folder
-	os.RemoveAll(testOutputDir + "/com")
+	//clean up folder
+	defer os.RemoveAll(testOutputDir)
 }
 
 func TestGenerateClientWithVersion(t *testing.T) {
-	testOutputDir := "."
+	testOutputDir := getTempDir(t, ".", "testOutput-")
 	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
 	// delete the output folder before test
-	os.RemoveAll(testOutputDir + "/com")
+	os.RemoveAll(testOutputDir)
 
 	//generate output result
 	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithVersion.rdl", false, false, false)
@@ -164,7 +162,7 @@ func TestGenerateClientWithVersion(t *testing.T) {
 	assert.Contains(t, string(clientImplContent), "postUser(UserV2")
 
 	// clean up folder
-	os.RemoveAll(testOutputDir + "/com")
+	defer os.RemoveAll(testOutputDir)
 }
 
 func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
@@ -178,4 +176,12 @@ func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
 		t.Fatalf("can not read file: %s", path+fileName)
 	}
 	return content
+}
+
+func getTempDir(t *testing.T, dir string, prefix string) string {
+	dir, err := ioutil.TempDir(dir, prefix)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	return dir
 }

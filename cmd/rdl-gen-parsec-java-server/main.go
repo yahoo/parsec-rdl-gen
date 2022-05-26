@@ -114,7 +114,6 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 	cName := utils.Capitalize(string(schema.Name))
 	ver, err := utils.GetSchemaVersionOrDefault(schema, 1)
 	checkErr(err)
-
 	if ver > 1 { // if rdl version > 1, we append V{version} in class name
 	    cName += "V" + strconv.Itoa(int(ver))
 	}
@@ -159,7 +158,6 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 
 			ver, err = utils.GetSchemaVersionOrDefault(schema, 1)
 			checkErr(err)
-
 			// import user defined struct classes
 			for _, t := range schema.Types {
 				tName, tType, _ := rdl.TypeInfo(t)

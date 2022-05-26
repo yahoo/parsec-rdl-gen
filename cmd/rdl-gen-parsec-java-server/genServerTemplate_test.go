@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -9,12 +10,9 @@ import (
 )
 
 func TestGenerateServerWithoutVersion(t *testing.T) {
-	testOutputDir := "."
+	testOutputDir := getTempDir(t, ".", "testOutput-")
 	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
-	srcPath := testOutputDir + "/src/main/java/com/yahoo/shopping/"
-	// delete the output folder before test
-	os.RemoveAll(testOutputDir + "/com")
-	os.RemoveAll(testOutputDir + "/src")
+	srcPath := "./src/main/java/com/yahoo/shopping/"
 
 	//generate output result
 	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithoutVersion.rdl", false, false, false)
@@ -45,17 +43,14 @@ func TestGenerateServerWithoutVersion(t *testing.T) {
 	assert.Contains(t, string(hImplContent), "public User getUsersById(ResourceContext context, Integer id)")
 
 	// clean up folder
-	os.RemoveAll(testOutputDir + "/com")
-	os.RemoveAll(testOutputDir + "/src")
+	defer os.RemoveAll(testOutputDir)
+	defer os.RemoveAll("./src")
 }
 
 func TestGenerateServerWithVersion(t *testing.T) {
-	testOutputDir := "."
+	testOutputDir := getTempDir(t, ".", "testOutput-")
 	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
-	srcPath := testOutputDir + "/src/main/java/com/yahoo/shopping/"
-	// delete the output folder before test
-	os.RemoveAll(testOutputDir + "/com")
-	os.RemoveAll(testOutputDir + "/src")
+	srcPath := "./src/main/java/com/yahoo/shopping/"
 
 	//generate output result
 	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithVersion.rdl", false, false, false)
@@ -87,8 +82,8 @@ func TestGenerateServerWithVersion(t *testing.T) {
 	assert.Contains(t, string(hImplContent), "public UserV2 getUsersById(ResourceContext context, Integer id)")
 
 	// clean up folder
-	os.RemoveAll(testOutputDir + "/com")
-	os.RemoveAll(testOutputDir + "/src")
+	defer os.RemoveAll(testOutputDir)
+	defer os.RemoveAll("./src")
 }
 
 func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
@@ -102,4 +97,12 @@ func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
 		t.Fatalf("can not read file: %s", path+fileName)
 	}
 	return content
+}
+
+func getTempDir(t *testing.T, dir string, prefix string) string {
+	dir, err := ioutil.TempDir(dir, prefix)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	return dir
 }

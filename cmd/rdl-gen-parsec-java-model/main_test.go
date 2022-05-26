@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -226,10 +227,8 @@ func TestAppendAnnotation(t *testing.T) {
 }
 
 func TestGenerateModelWithoutVersion(t *testing.T) {
-	testOutputDir := "."
+	testOutputDir := getTempDir(t, ".", "testOutput-")
 	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
-	// delete the output folder before test
-	os.RemoveAll(testOutputDir + "/com")
 
 	//generate output result
 	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithoutVersion.rdl", false, false, false)
@@ -243,14 +242,14 @@ func TestGenerateModelWithoutVersion(t *testing.T) {
 	assert.Contains(t, string(content), "class User")
 
 	// clean up folder
-	os.RemoveAll(testOutputDir + "/com")
+	defer os.RemoveAll(testOutputDir)
 }
 
 func TestGenerateModelWithVersion(t *testing.T) {
-	testOutputDir := "."
+	testOutputDir := getTempDir(t, ".", "testOutput-")
 	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
 	// delete the output folder before test
-	os.RemoveAll(testOutputDir + "/com")
+	os.RemoveAll(testOutputDir)
 
 	//generate output result
 	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithVersion.rdl", false, false, false)
@@ -264,7 +263,7 @@ func TestGenerateModelWithVersion(t *testing.T) {
 	assert.Contains(t, string(content), "class UserV2")
 
 	// clean up folder
-	os.RemoveAll(testOutputDir + "/com")
+	defer os.RemoveAll(testOutputDir)
 }
 
 func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
@@ -278,4 +277,12 @@ func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
 		t.Fatalf("can not read file: %s", path+fileName)
 	}
 	return content
+}
+
+func getTempDir(t *testing.T, dir string, prefix string) string {
+	dir, err := ioutil.TempDir(dir, prefix)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	return dir
 }

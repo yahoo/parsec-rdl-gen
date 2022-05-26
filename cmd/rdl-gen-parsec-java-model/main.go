@@ -144,7 +144,6 @@ func generateJavaType(banner string, schema *rdl.Schema, registry rdl.TypeRegist
 	cName := utils.Capitalize(string(tName))
 	ver, err := utils.GetSchemaVersionOrDefault(schema, 1)
 	checkErr(err)
-
 	if ver > 1 {
 		cName += "V" + strconv.Itoa(int(ver))
 	}
@@ -598,7 +597,6 @@ func (gen *javaModelGenerator) generateEnum(t *rdl.Type) {
 	name := utils.Capitalize(string(et.Name))
 	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
 	checkErr(err)
-
 	if ver > 1 {
 		name += "V" + strconv.Itoa(int(ver))
 	}
