@@ -248,8 +248,6 @@ func TestGenerateModelWithoutVersion(t *testing.T) {
 func TestGenerateModelWithVersion(t *testing.T) {
 	testOutputDir := getTempDir(t, ".", "testOutput-")
 	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
-	// delete the output folder before test
-	os.RemoveAll(testOutputDir)
 
 	//generate output result
 	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithVersion.rdl", false, false, false)
