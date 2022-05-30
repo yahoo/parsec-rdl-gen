@@ -1,6 +1,8 @@
 package main
 
 import (
+	"io/ioutil"
+	"os"
 	"strings"
 	"testing"
 
@@ -222,4 +224,63 @@ func TestAppendAnnotation(t *testing.T) {
 	gen := javaModelGenerator{}
 	gen.appendAnnotation("key", "value")
 	assert.Equal(t, "key(value)", strings.Join(gen.body, ""))
+}
+
+func TestGenerateModelWithoutVersion(t *testing.T) {
+	testOutputDir := getTempDir(t, ".", "testOutput-")
+	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
+
+	//generate output result
+	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithoutVersion.rdl", false, false, false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	GenerateJavaModel("withoutVersion", schema, testOutputDir, true, "", false, "upper_first")
+
+	//asserts
+	content := checkAndGetFileContent(t, path, "User.java")
+	assert.Contains(t, string(content), "class User")
+
+	// clean up folder
+	defer os.RemoveAll(testOutputDir)
+}
+
+func TestGenerateModelWithVersion(t *testing.T) {
+	testOutputDir := getTempDir(t, ".", "testOutput-")
+	path := testOutputDir + "/com/yahoo/shopping/parsec_generated/"
+
+	//generate output result
+	schema, err := rdl.ParseRDLFile("../../testdata/sampleWithVersion.rdl", false, false, false)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	GenerateJavaModel("withVersion", schema, testOutputDir, true, "", false, "upper_first")
+
+	//asserts
+	content := checkAndGetFileContent(t, path, "UserV2.java")
+	assert.Contains(t, string(content), "class UserV2")
+
+	// clean up folder
+	defer os.RemoveAll(testOutputDir)
+}
+
+func checkAndGetFileContent(t *testing.T, path string, fileName string) []byte {
+	//1. check correspanding client file exists
+	if _, err := os.Stat(path + fileName); err != nil {
+		t.Fatalf("file not exists: %s", path+fileName)
+	}
+	//2. check file content
+	content, err := os.ReadFile(path + fileName)
+	if err != nil {
+		t.Fatalf("can not read file: %s", path+fileName)
+	}
+	return content
+}
+
+func getTempDir(t *testing.T, dir string, prefix string) string {
+	dir, err := ioutil.TempDir(dir, prefix)
+	if err != nil {
+		t.Fatalf("%v", err)
+	}
+	return dir
 }

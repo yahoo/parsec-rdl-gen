@@ -1,0 +1,22 @@
+namespace com.yahoo.shopping;
+name sample;
+version 2;
+
+// define datatype
+type User struct {
+    int32 id;
+    string name;
+}
+
+// define endpoints
+// create a new user
+resource User POST "/users" {
+    User user;
+    expected CREATED;
+}
+
+// get a user by id
+resource User GET "/users/{id}" {
+    int32 id;
+    expected OK;
+}

@@ -112,7 +112,8 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 		return err
 	}
 	cName := utils.Capitalize(string(schema.Name))
-	ver := *schema.Version
+	ver, err := utils.GetSchemaVersionOrDefault(schema, 1)
+	checkErr(err)
 	if ver > 1 { // if rdl version > 1, we append V{version} in class name
 	    cName += "V" + strconv.Itoa(int(ver))
 	}
@@ -155,7 +156,8 @@ func GenerateJavaServer(banner string, schema *rdl.Schema, outdir string, genAnn
 			gen = &javaServerGenerator{reg, schema, cName, out, nil, banner, genAnnotations, nil, genUsingPath, namespace, isPcSuffix}
 			packageName := utils.JavaGenerationPackage(schema, namespace)
 
-			ver := *schema.Version
+			ver, err = utils.GetSchemaVersionOrDefault(schema, 1)
+			checkErr(err)
 			// import user defined struct classes
 			for _, t := range schema.Types {
 				tName, tType, _ := rdl.TypeInfo(t)
@@ -803,7 +805,9 @@ func (gen *javaServerGenerator) makeJavaTypeRef(reg rdl.TypeRegistry, t *rdl.Typ
 }
 
 func (gen *javaServerGenerator) javaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) string {
-	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix, *gen.schema.Version)
+	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
+	checkErr(err)
+	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix, ver)
 }
 
 func (gen *javaServerGenerator) processTemplate(templateSource string) error {
@@ -923,7 +927,9 @@ func (gen *javaServerGenerator) handlerBody(r *rdl.Resource) string {
 			fargs = append(fargs, bodyName)
 		}
 	}
-	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix, *gen.schema.Version)
+	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
+	checkErr(err)
+	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix, ver)
 	sargs := ""
 	if len(fargs) > 0 {
 		sargs = ", " + strings.Join(fargs, ", ")
@@ -1070,7 +1076,9 @@ func (gen *javaServerGenerator) handlerSignature(r *rdl.Resource) string {
 			spec += "    @Consumes(\"application/json;charset=utf-8\")\n"
 		}
 	}
-	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix, *gen.schema.Version)
+	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
+	checkErr(err)
+	methName, _ := javaMethodName(gen.registry, r, gen.genUsingPath, gen.isPcSuffix, ver)
 	return spec + "    public " + returnType + " " + methName + "(" + strings.Join(params, ", ") + "\n    )"
 }
 
@@ -1239,7 +1247,9 @@ func (gen *javaServerGenerator) serverMethodSignature(r *rdl.Resource) string {
 	returnType := gen.javaType(reg, r.Type, false, "", "")
 	//noContent := r.Expected == "NO_CONTENT" && r.Alternatives == nil
 	//FIX: if nocontent, return nothing, have a void result, and don't "@Produces" anything
-	methName, params := javaMethodName(reg, r, gen.genUsingPath, gen.isPcSuffix, *gen.schema.Version)
+	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
+	checkErr(err)
+	methName, params := javaMethodName(reg, r, gen.genUsingPath, gen.isPcSuffix, ver)
 	sparams := ""
 	if len(params) > 0 {
 		sparams = ", " + strings.Join(params, ", ")

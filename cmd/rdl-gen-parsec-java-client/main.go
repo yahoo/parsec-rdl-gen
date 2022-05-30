@@ -465,5 +465,7 @@ func (gen *javaClientGenerator) clientMethodOverloadContent(r *rdl.Resource) str
 }
 
 func (gen *javaClientGenerator) javaType(reg rdl.TypeRegistry, rdlType rdl.TypeRef, optional bool, items rdl.TypeRef, keys rdl.TypeRef) string {
-	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix, *gen.schema.Version)
+	ver, err := utils.GetSchemaVersionOrDefault(gen.schema, 1)
+	checkErr(err)
+	return utils.JavaType(reg, rdlType, optional, items, keys, gen.isPcSuffix, ver)
 }

@@ -435,3 +435,13 @@ func JavaType(
 		return javaType
 	}
 }
+
+func GetSchemaVersionOrDefault(schema *rdl.Schema, defaultVersion int32) (int32, error) {
+	if schema != nil {
+		if schema.Version != nil {
+			return *schema.Version, nil
+		}
+		return defaultVersion, nil
+	}
+	return 0, fmt.Errorf("schema is nil")
+}
